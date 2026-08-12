@@ -58,12 +58,37 @@ const COMBO_TIME = 240;
 // JUGADOR
 // ==========================================
 
+// ==========================================
+// SPRITES DEL PERSONAJE
+// ==========================================
+
+const playerImages = {
+  idle: new Image(),
+  run1: new Image(),
+  run2: new Image(),
+  jump: new Image(),
+  hit: new Image()
+};
+
+playerImages.idle.src = "assets/player/idle.png";
+playerImages.run1.src = "assets/player/run1.png";
+playerImages.run2.src = "assets/player/run2.png";
+playerImages.jump.src = "assets/player/jump.png";
+playerImages.hit.src = "assets/player/hit.png";
+
+
+// CONTROL DE ANIMACIÓN
+let runFrame = 0;
+let runAnimationTimer = 0;
+
+const RUN_ANIMATION_SPEED = 8;
+
 const player = {
   x: 120,
   y: 350,
 
-  width: 50,
-  height: 70,
+  width: 70,
+  height: 85,
 
   velocityY: 0,
   jumping: false
@@ -259,29 +284,86 @@ function drawGround() {
 
 function drawBible() {
 
-  ctx.fillStyle = "#1947A3";
+  let imageToDraw;
 
-  ctx.fillRect(
-    player.x,
-    player.y,
-    player.width,
-    player.height
-  );
+  // GAME OVER
+  if (gameOver) {
+
+    imageToDraw = playerImages.hit;
+
+  }
+
+  // SALTANDO
+  else if (player.jumping) {
+
+    imageToDraw = playerImages.jump;
+
+  }
+
+  // ANTES DE INICIAR
+  else if (!gameStarted) {
+
+    imageToDraw = playerImages.idle;
+
+  }
+
+  // CORRIENDO
+  else {
+
+    runAnimationTimer++;
+
+    if (runAnimationTimer >= RUN_ANIMATION_SPEED) {
+
+      runFrame++;
+
+      if (runFrame > 1) {
+        runFrame = 0;
+      }
+
+      runAnimationTimer = 0;
+    }
+
+    if (runFrame === 0) {
+
+      imageToDraw = playerImages.run1;
+
+    } else {
+
+      imageToDraw = playerImages.run2;
+    }
+  }
 
 
-  ctx.strokeStyle = "#FFFFFF";
+  // DIBUJAR PERSONAJE
+  if (
+    imageToDraw &&
+    imageToDraw.complete &&
+    imageToDraw.naturalWidth > 0
+  ) {
 
-  ctx.lineWidth = 3;
+    ctx.drawImage(
+      imageToDraw,
+      player.x,
+      player.y,
+      player.width,
+      player.height
+    );
 
+  } else {
 
-  ctx.strokeRect(
-    player.x,
-    player.y,
-    player.width,
-    player.height
-  );
+    // Si la imagen todavía no cargó,
+    // muestra un rectángulo provisional.
+
+    ctx.fillStyle = "#1947A3";
+
+    ctx.fillRect(
+      player.x,
+      player.y,
+      player.width,
+      player.height
+    );
+  }
 }
-
 
 // ==========================================
 // FÍSICA DEL JUGADOR
