@@ -467,19 +467,6 @@ ctx.fillRect(
 
 function drawGround() {
 
-  // ==========================================
-  // COLOR DE FONDO DE LA TIERRA
-  // Evita que se vea el cielo debajo
-  // ==========================================
-
-  ctx.fillStyle = "#5A351F";
-
-  ctx.fillRect(
-    0,
-    groundDrawY,
-    canvas.width,
-    canvas.height - groundDrawY
-  );
 
 
   // ==========================================
