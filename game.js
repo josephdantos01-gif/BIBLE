@@ -467,39 +467,89 @@ ctx.fillRect(
 // ==========================================
 
 function drawGround() {
-  const tileWidth = 500;
 
-  if (gameStarted && !gameOver && !paused) {
-    groundOffset -= gameSpeed;
-  }
+  // ==========================================
+  // COLOR DE FONDO DE LA TIERRA
+  // Evita que se vea el cielo debajo
+  // ==========================================
 
-  if (groundOffset <= -tileWidth) {
-    groundOffset += tileWidth;
-  }
+  ctx.fillStyle = "#5A351F";
 
-  if (groundImage.complete && groundImage.naturalWidth > 0) {
+  ctx.fillRect(
+    0,
+    groundDrawY,
+    canvas.width,
+    canvas.height - groundDrawY
+  );
+
+
+  // ==========================================
+  // IMAGEN DEL SUELO
+  // ==========================================
+
+  if (
+    groundImage.complete &&
+    groundImage.naturalWidth > 0
+  ) {
+
+    // Un poco más ancho para que los bloques
+    // se monten entre sí y no dejen huecos
+    const tileWidth = 330;
+
+    // Más alto para rellenar la pantalla
+    const tileHeight =
+      canvas.height - groundDrawY + 80;
+
+
+    // MOVIMIENTO DEL SUELO
+
+    if (
+      gameStarted &&
+      !gameOver &&
+      !paused
+    ) {
+
+      groundOffset -= gameSpeed;
+
+    }
+
+
+    // Reiniciar desplazamiento
+
+    if (
+      groundOffset <= -tileWidth
+    ) {
+
+      groundOffset += tileWidth;
+
+    }
+
+
+    // ==========================================
+    // DIBUJAR BLOQUES
+    // ==========================================
+
     for (
       let x = groundOffset - tileWidth;
       x < canvas.width + tileWidth;
-      x += tileWidth
+      x += tileWidth - 2
     ) {
+
       ctx.drawImage(
         groundImage,
+
         x,
         groundDrawY,
-        tileWidth,
-        canvas.height - groundDrawY
+
+        // +3 evita líneas entre bloques
+        tileWidth + 3,
+        tileHeight
       );
+
     }
-  } else {
-    ctx.fillStyle = "#43A047";
-    ctx.fillRect(
-      0,
-      groundDrawY,
-      canvas.width,
-      canvas.height - groundDrawY
-    );
+
   }
+
 }
 
 
@@ -2126,9 +2176,9 @@ function drawGameOver() {
 
     Math.floor(score),
 
-    145,
+    185,
 
-    205
+    215
 
   );
 
@@ -2139,9 +2189,9 @@ function drawGameOver() {
 
     highScore,
 
-    855,
+    850,
 
-    205
+    215
 
   );
 
