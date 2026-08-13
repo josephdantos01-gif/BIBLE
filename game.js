@@ -164,6 +164,10 @@ obstacleImages.devil.src =
   // ==========================================
 // IMÁGENES DE COLECCIONABLES
 // ==========================================
+ let playerHit = false;
+let playerHitTimer = 0;
+
+const HIT_DURATION = 45;
 
 const collectibleImages = {
   star: new Image(),
@@ -484,7 +488,12 @@ function drawBible() {
 
   let imageToDraw;
 
+// PERSONAJE GOLPEADO
+if (playerHit) {
 
+  imageToDraw = playerImages.hit;
+
+}
   // GAME OVER
   if (gameOver) {
 
@@ -1664,12 +1673,19 @@ function checkCollision(obstacle) {
   }
 
   // GOLPE NORMAL: pierde una vida.
-  lives--;
-  obstacle.destroyed = true;
+lives--;
 
-  if (lives <= 0) {
-    lives = 0;
-    endGame();
+obstacle.destroyed = true;
+
+// Mostrar personaje golpeado
+playerHit = true;
+playerHitTimer = HIT_DURATION;
+
+if (lives > 0) {
+  return;
+}
+
+endGame();
   }
 }
 
@@ -2478,7 +2494,15 @@ canvas.addEventListener(
 // ==========================================
 
 function gameLoop() {
+if (playerHit) {
 
+  playerHitTimer--;
+
+  if (playerHitTimer <= 0) {
+    playerHit = false;
+  }
+
+}
   // ESCENARIO
 
   drawBackground();
