@@ -15,7 +15,7 @@ const gravity = 0.8;
 const groundY = 455;
 
 // Posición visual donde comienza el PNG del suelo
-const groundDrawY = 420;
+const groundDrawY = 350;
 
 const BASE_SPEED = 8;
 const MAX_SPEED = 16;
