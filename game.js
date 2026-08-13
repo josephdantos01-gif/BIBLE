@@ -2099,9 +2099,9 @@ function drawStartScreen() {
 
     highScore,
 
-    145,
+    140,
 
-    285
+    290
 
   );
 
@@ -2176,9 +2176,9 @@ function drawGameOver() {
 
     Math.floor(score),
 
-    185,
+    175,
 
-    315
+    290
 
   );
 
@@ -2189,9 +2189,9 @@ function drawGameOver() {
 
     highScore,
 
-    1000,
+    1150,
 
-    315
+    290
 
   );
 
