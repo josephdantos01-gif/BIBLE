@@ -129,7 +129,38 @@ let forestOffset = 0;
 let treeOffset = 0;
 let groundOffset = 0;
 
+// ==========================================
+// SPRITES DE OBSTÁCULOS
+// ==========================================
 
+const obstacleImages = {
+  rock: new Image(),
+  fire: new Image(),
+  snake: new Image(),
+  wall: new Image(),
+  raven: new Image(),
+  devil: new Image()
+};
+
+obstacleImages.rock.src =
+  "assets/obstacles/rock.png";
+
+obstacleImages.fire.src =
+  "assets/obstacles/fire.png";
+
+obstacleImages.snake.src =
+  "assets/obstacles/snake.png";
+
+obstacleImages.wall.src =
+  "assets/obstacles/wall.png";
+
+obstacleImages.raven.src =
+  "assets/obstacles/raven.png";
+
+obstacleImages.devil.src =
+  "assets/obstacles/devil.png";
+
+  
 // ==========================================
 // ANIMACIÓN DEL PERSONAJE
 // ==========================================
@@ -613,81 +644,78 @@ function createObstacle() {
 
   let types = [
 
+    // PIEDRA
     {
-      type: "small",
-      width: 30,
-      height: 40
+      type: "rock",
+      width: 45,
+      height: 40,
+      position: "ground"
     },
 
+    // FUEGO
     {
-      type: "tall",
-      width: 40,
-      height: 65
+      type: "fire",
+      width: 45,
+      height: 55,
+      position: "ground"
+    },
+
+    // SERPIENTE
+    {
+      type: "snake",
+      width: 65,
+      height: 38,
+      position: "ground"
+    },
+
+    // MURO / ESCOMBROS
+    {
+      type: "wall",
+      width: 85,
+      height: 55,
+      position: "ground"
     }
 
   ];
 
 
+  // ==========================
   // NIVEL 2
+  // Aparece el cuervo
+  // ==========================
 
-  if (
-    level >= 2
-  ) {
+  if (level >= 2) {
 
     types.push({
-
-      type: "wide",
-      width: 80,
-      height: 30
-
+      type: "raven",
+      width: 75,
+      height: 55,
+      position: "airHigh"
     });
 
-
-    types.push(
-
-      {
-        type: "flyingHigh",
-        width: 55,
-        height: 35
-      },
-
-      {
-        type: "flyingHigh",
-        width: 55,
-        height: 35
-      }
-
-    );
-
   }
 
 
+  // ==========================
   // NIVEL 3
+  // Aparece el diablo
+  // ==========================
 
-  if (
-    level >= 3
-  ) {
+  if (level >= 3) {
 
-    types.push(
-
-      {
-        type: "flyingLow",
-        width: 55,
-        height: 35
-      },
-
-      {
-        type: "flyingLow",
-        width: 55,
-        height: 35
-      }
-
-    );
+    types.push({
+      type: "devil",
+      width: 65,
+      height: 65,
+      position: "airLow"
+    });
 
   }
 
 
-  const type =
+  // Elegir obstáculo aleatorio
+
+  const obstacleType =
     types[
       Math.floor(
         Math.random() *
@@ -699,31 +727,39 @@ function createObstacle() {
   let y;
 
 
+  // TERRESTRES
+
   if (
-    type.type ===
-    "flyingHigh"
+    obstacleType.position ===
+    "ground"
   ) {
 
     y =
-      groundY - 155;
+      groundY -
+      obstacleType.height;
 
   }
+
+
+  // AÉREO ALTO
 
   else if (
-    type.type ===
-    "flyingLow"
+    obstacleType.position ===
+    "airHigh"
   ) {
 
     y =
-      groundY - 105;
+      groundY - 190;
 
   }
+
+
+  // AÉREO BAJO
 
   else {
 
     y =
-      groundY -
-      type.height;
+      groundY - 120;
 
   }
 
@@ -733,16 +769,16 @@ function createObstacle() {
     x:
       canvas.width + 30,
 
-    y,
+    y: y,
 
     width:
-      type.width,
+      obstacleType.width,
 
     height:
-      type.height,
+      obstacleType.height,
 
     type:
-      type.type,
+      obstacleType.type,
 
     passed:
       false
@@ -751,72 +787,52 @@ function createObstacle() {
 
 }
 
-
 // ==========================================
 // DIBUJAR OBSTÁCULOS
 // ==========================================
 
-function drawObstacle(
-  obstacle
-) {
+function drawObstacle(obstacle) {
+
+  const image =
+    obstacleImages[
+      obstacle.type
+    ];
+
 
   if (
-    obstacle.type ===
-    "small"
+    image &&
+    image.complete &&
+    image.naturalWidth > 0
   ) {
 
-    ctx.fillStyle =
-      "#6B7280";
+    ctx.drawImage(
+      image,
 
-  }
+      obstacle.x,
+      obstacle.y,
 
-  else if (
-    obstacle.type ===
-    "tall"
-  ) {
-
-    ctx.fillStyle =
-      "#7C3AED";
-
-  }
-
-  else if (
-    obstacle.type ===
-    "wide"
-  ) {
-
-    ctx.fillStyle =
-      "#B45309";
-
-  }
-
-  else if (
-    obstacle.type ===
-    "flyingHigh"
-  ) {
-
-    ctx.fillStyle =
-      "#DC2626";
+      obstacle.width,
+      obstacle.height
+    );
 
   }
 
   else {
 
+    // Rectángulo provisional
+    // si alguna imagen no carga
+
     ctx.fillStyle =
-      "#F97316";
+      "#FF0000";
+
+    ctx.fillRect(
+      obstacle.x,
+      obstacle.y,
+      obstacle.width,
+      obstacle.height
+    );
 
   }
-
-
-  ctx.fillRect(
-
-    obstacle.x,
-    obstacle.y,
-
-    obstacle.width,
-    obstacle.height
-
-  );
 
 }
 
