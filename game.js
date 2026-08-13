@@ -2099,9 +2099,9 @@ function drawStartScreen() {
 
     highScore,
 
-    200,
+    180,
 
-    245
+    275
 
   );
 
