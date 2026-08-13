@@ -421,7 +421,7 @@ function drawGround() {
 
     // Más alto para rellenar la pantalla
     const tileHeight =
-      canvas.height - groundDrawY + 80;
+      canvas.height - groundDrawY + 40;
 
 
     // MOVIMIENTO DEL SUELO
@@ -1739,84 +1739,76 @@ function updateDifficulty() {
 
 function drawLevelMessage() {
 
-  if (
-    levelMessageTimer <= 0
-  ) {
-
+  if (levelMessageTimer <= 0) {
     return;
-
   }
-
 
   ctx.save();
 
+  // ==========================================
+  // RECUADRO CENTRADO
+  // ==========================================
+
+  const boxWidth = 400;
+  const boxHeight = 120;
+
+  const boxX =
+    (canvas.width - boxWidth) / 2;
+
+  const boxY = 180;
 
   ctx.fillStyle =
-    "rgba(0,0,0,0.50)";
-
+    "rgba(0, 0, 0, 0.55)";
 
   ctx.fillRect(
-    350,
-    170,
-    300,
-    110
+    boxX,
+    boxY,
+    boxWidth,
+    boxHeight
   );
 
 
-  ctx.textAlign =
-    "center";
+  // ==========================================
+  // LEVEL
+  // ==========================================
 
+  ctx.textAlign = "center";
 
-  ctx.fillStyle =
-    "#FFD700";
-
+  ctx.fillStyle = "#FFD700";
 
   ctx.font =
     "bold 38px Arial";
 
-
   ctx.fillText(
-
-    "LEVEL " +
-    level,
-
+    "LEVEL " + level,
     canvas.width / 2,
-
-    220
-
+    boxY + 50
   );
 
 
-  ctx.font =
-    "18px Arial";
+  // ==========================================
+  // NUEVO NIVEL
+  // ==========================================
 
+  ctx.font =
+    "bold 18px Arial";
 
   ctx.fillStyle =
     "#FFFFFF";
 
-
   ctx.fillText(
-
     "¡Nuevo nivel!",
-
     canvas.width / 2,
-
-    252
-
+    boxY + 88
   );
 
 
   ctx.restore();
 
 
-  if (
-    !paused
-  ) {
-
+  if (!paused) {
     levelMessageTimer--;
-
   }
-
 }
 
 
