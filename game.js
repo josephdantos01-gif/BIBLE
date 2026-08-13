@@ -12,7 +12,7 @@ canvas.height = 720;
 const gravity = 0.8;
 
 // Línea física donde pisan personaje y obstáculos
-const groundY = 550;
+const groundY = 500;
 
 // Posición visual donde comienza el PNG del suelo
 const groundDrawY = 350;
