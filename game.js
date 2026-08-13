@@ -55,8 +55,17 @@ const COMBO_TIME = 240;
 
 
 // ==========================================
-// JUGADOR
+// IMÁGENES DE INTERFAZ
 // ==========================================
+
+const startScreenImage = new Image();
+startScreenImage.src =
+  "assets/ui/start-screen.png";
+
+const gameOverImage = new Image();
+gameOverImage.src =
+  "assets/ui/game-over.png";
+
 
 // ==========================================
 // SPRITES DEL PERSONAJE
@@ -70,28 +79,82 @@ const playerImages = {
   hit: new Image()
 };
 
-playerImages.idle.src = "assets/player/idle.png";
-playerImages.run1.src = "assets/player/run1.png";
-playerImages.run2.src = "assets/player/run2.png";
-playerImages.jump.src = "assets/player/jump.png";
-playerImages.hit.src = "assets/player/hit.png";
+playerImages.idle.src =
+  "assets/player/idle.png";
+
+playerImages.run1.src =
+  "assets/player/run1.png";
+
+playerImages.run2.src =
+  "assets/player/run2.png";
+
+playerImages.jump.src =
+  "assets/player/jump.png";
+
+playerImages.hit.src =
+  "assets/player/hit.png";
 
 
-// CONTROL DE ANIMACIÓN
+// ==========================================
+// IMÁGENES DEL ESCENARIO
+// ==========================================
+
+const skyImage = new Image();
+skyImage.src =
+  "assets/background/sky.png";
+
+const mountainsImage = new Image();
+mountainsImage.src =
+  "assets/background/mountains.png";
+
+const forestImage = new Image();
+forestImage.src =
+  "assets/background/tree.png";
+
+const treeImage = new Image();
+treeImage.src =
+  "assets/background/tree2.png";
+
+const groundImage = new Image();
+groundImage.src =
+  "assets/background/ground.png";
+
+
+// ==========================================
+// MOVIMIENTO DEL ESCENARIO
+// ==========================================
+
+let mountainOffset = 0;
+let forestOffset = 0;
+let treeOffset = 0;
+let groundOffset = 0;
+
+
+// ==========================================
+// ANIMACIÓN DEL PERSONAJE
+// ==========================================
+
 let runFrame = 0;
 let runAnimationTimer = 0;
 
 const RUN_ANIMATION_SPEED = 8;
 
+
+// ==========================================
+// JUGADOR
+// ==========================================
+
 const player = {
+
   x: 120,
-  y: 350,
+  y: groundY - 85,
 
   width: 70,
   height: 85,
 
   velocityY: 0,
   jumping: false
+
 };
 
 
@@ -116,132 +179,45 @@ let nextCollectible = 180;
 
 
 // ==========================================
-// NUBES
-// ==========================================
-
-const clouds = [
-  {
-    x: 150,
-    y: 70,
-    size: 25,
-    speed: 0.6
-  },
-
-  {
-    x: 500,
-    y: 100,
-    size: 35,
-    speed: 0.9
-  },
-
-  {
-    x: 850,
-    y: 55,
-    size: 22,
-    speed: 0.5
-  }
-];
-
-
-// ==========================================
-// FONDO
+// FONDO / PARALLAX
 // ==========================================
 
 function drawBackground() {
 
-  ctx.fillStyle = "#87CEEB";
+  // ------------------------------------------
+  // CIELO
+  // ------------------------------------------
 
-  ctx.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-}
+  if (
+    skyImage.complete &&
+    skyImage.naturalWidth > 0
+  ) {
 
+    ctx.drawImage(
+      skyImage,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
 
-// ==========================================
-// NUBES
-// ==========================================
+  } else {
 
-function drawCloud(cloud) {
+    ctx.fillStyle = "#41B6E6";
 
-  ctx.fillStyle = "white";
+    ctx.fillRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
 
-  ctx.beginPath();
-
-  ctx.arc(
-    cloud.x,
-    cloud.y,
-    cloud.size,
-    0,
-    Math.PI * 2
-  );
-
-  ctx.arc(
-    cloud.x + 25,
-    cloud.y - 10,
-    cloud.size + 5,
-    0,
-    Math.PI * 2
-  );
-
-  ctx.arc(
-    cloud.x + 55,
-    cloud.y,
-    cloud.size,
-    0,
-    Math.PI * 2
-  );
-
-  ctx.fill();
-}
+  }
 
 
-function updateClouds() {
-
-  clouds.forEach(cloud => {
-
-    if (
-      gameStarted &&
-      !gameOver &&
-      !paused
-    ) {
-
-      cloud.x -= cloud.speed;
-    }
-
-    if (cloud.x < -120) {
-
-      cloud.x =
-        canvas.width +
-        Math.random() * 300;
-    }
-
-    drawCloud(cloud);
-
-  });
-}
-
-
-// ==========================================
-// PISO
-// ==========================================
-
-let groundOffset = 0;
-
-
-function drawGround() {
-
-  ctx.fillStyle = "#43A047";
-
-  ctx.fillRect(
-    0,
-    groundY,
-    canvas.width,
-    canvas.height - groundY
-  );
-
+  // ------------------------------------------
+  // MOVER CAPAS
+  // ------------------------------------------
 
   if (
     gameStarted &&
@@ -249,92 +225,298 @@ function drawGround() {
     !paused
   ) {
 
-    groundOffset -= gameSpeed;
+    mountainOffset -=
+      gameSpeed * 0.08;
+
+    forestOffset -=
+      gameSpeed * 0.20;
+
+    treeOffset -=
+      gameSpeed * 0.45;
+
   }
 
 
-  if (groundOffset <= -50) {
+  // ------------------------------------------
+  // MONTAÑAS
+  // ------------------------------------------
 
-    groundOffset = 0;
-  }
-
-
-  ctx.fillStyle = "#2E7D32";
-
-
-  for (
-    let x = groundOffset;
-    x < canvas.width;
-    x += 50
+  if (
+    mountainOffset <=
+    -canvas.width
   ) {
 
-    ctx.fillRect(
-      x,
-      groundY + 15,
-      25,
-      5
-    );
+    mountainOffset +=
+      canvas.width;
+
   }
+
+
+  if (
+    mountainsImage.complete &&
+    mountainsImage.naturalWidth > 0
+  ) {
+
+    ctx.drawImage(
+      mountainsImage,
+      mountainOffset,
+      145,
+      canvas.width,
+      275
+    );
+
+    ctx.drawImage(
+      mountainsImage,
+      mountainOffset + canvas.width,
+      145,
+      canvas.width,
+      275
+    );
+
+  }
+
+
+  // ------------------------------------------
+  // BOSQUE
+  // ------------------------------------------
+
+  if (
+    forestOffset <=
+    -canvas.width
+  ) {
+
+    forestOffset +=
+      canvas.width;
+
+  }
+
+
+  if (
+    forestImage.complete &&
+    forestImage.naturalWidth > 0
+  ) {
+
+    ctx.drawImage(
+      forestImage,
+      forestOffset,
+      245,
+      canvas.width,
+      175
+    );
+
+    ctx.drawImage(
+      forestImage,
+      forestOffset + canvas.width,
+      245,
+      canvas.width,
+      175
+    );
+
+  }
+
+
+  // ------------------------------------------
+  // ÁRBOLES INDIVIDUALES
+  // ------------------------------------------
+
+  const treeSpacing = 420;
+
+  if (
+    treeOffset <=
+    -treeSpacing
+  ) {
+
+    treeOffset +=
+      treeSpacing;
+
+  }
+
+
+  if (
+    treeImage.complete &&
+    treeImage.naturalWidth > 0
+  ) {
+
+    const treeWidth = 105;
+    const treeHeight = 170;
+
+    for (
+      let x = treeOffset + 250;
+      x < canvas.width + treeSpacing;
+      x += treeSpacing
+    ) {
+
+      ctx.drawImage(
+        treeImage,
+        x,
+        groundY - treeHeight,
+        treeWidth,
+        treeHeight
+      );
+
+    }
+
+  }
+
 }
 
 
 // ==========================================
-// PERSONAJE PROVISIONAL
+// SUELO
+// ==========================================
+
+function drawGround() {
+
+  const tileWidth = 500;
+
+  if (
+    gameStarted &&
+    !gameOver &&
+    !paused
+  ) {
+
+    groundOffset -=
+      gameSpeed;
+
+  }
+
+
+  if (
+    groundOffset <= -tileWidth
+  ) {
+
+    groundOffset +=
+      tileWidth;
+
+  }
+
+
+  if (
+    groundImage.complete &&
+    groundImage.naturalWidth > 0
+  ) {
+
+    for (
+      let x =
+        groundOffset - tileWidth;
+
+      x <
+      canvas.width + tileWidth;
+
+      x += tileWidth
+    ) {
+
+      ctx.drawImage(
+        groundImage,
+
+        x,
+
+        groundY,
+
+        tileWidth,
+
+        canvas.height -
+        groundY
+      );
+
+    }
+
+  } else {
+
+    ctx.fillStyle =
+      "#43A047";
+
+    ctx.fillRect(
+      0,
+      groundY,
+      canvas.width,
+      canvas.height -
+      groundY
+    );
+
+  }
+
+}
+
+
+// ==========================================
+// DIBUJAR PERSONAJE
 // ==========================================
 
 function drawBible() {
 
   let imageToDraw;
 
+
   // GAME OVER
   if (gameOver) {
 
-    imageToDraw = playerImages.hit;
+    imageToDraw =
+      playerImages.hit;
 
   }
+
 
   // SALTANDO
-  else if (player.jumping) {
+  else if (
+    player.jumping
+  ) {
 
-    imageToDraw = playerImages.jump;
+    imageToDraw =
+      playerImages.jump;
 
   }
+
 
   // ANTES DE INICIAR
-  else if (!gameStarted) {
+  else if (
+    !gameStarted
+  ) {
 
-    imageToDraw = playerImages.idle;
+    imageToDraw =
+      playerImages.idle;
 
   }
+
 
   // CORRIENDO
   else {
 
-    runAnimationTimer++;
+    if (!paused) {
 
-    if (runAnimationTimer >= RUN_ANIMATION_SPEED) {
+      runAnimationTimer++;
+
+    }
+
+
+    if (
+      runAnimationTimer >=
+      RUN_ANIMATION_SPEED
+    ) {
 
       runFrame++;
 
-      if (runFrame > 1) {
+      if (
+        runFrame > 1
+      ) {
+
         runFrame = 0;
+
       }
 
       runAnimationTimer = 0;
+
     }
 
-    if (runFrame === 0) {
 
-      imageToDraw = playerImages.run1;
+    imageToDraw =
+      runFrame === 0
+        ? playerImages.run1
+        : playerImages.run2;
 
-    } else {
-
-      imageToDraw = playerImages.run2;
-    }
   }
 
 
-  // DIBUJAR PERSONAJE
   if (
     imageToDraw &&
     imageToDraw.complete &&
@@ -343,18 +525,18 @@ function drawBible() {
 
     ctx.drawImage(
       imageToDraw,
+
       player.x,
       player.y,
+
       player.width,
       player.height
     );
 
   } else {
 
-    // Si la imagen todavía no cargó,
-    // muestra un rectángulo provisional.
-
-    ctx.fillStyle = "#1947A3";
+    ctx.fillStyle =
+      "#1947A3";
 
     ctx.fillRect(
       player.x,
@@ -362,8 +544,11 @@ function drawBible() {
       player.width,
       player.height
     );
+
   }
+
 }
+
 
 // ==========================================
 // FÍSICA DEL JUGADOR
@@ -371,25 +556,27 @@ function drawBible() {
 
 function updatePlayer() {
 
-  // Mantener espacio o dedo
-  // produce un salto más alto
-
   if (
     jumpHeld &&
     player.jumping &&
     player.velocityY < 0 &&
-    jumpHoldFrames < MAX_JUMP_HOLD
+    jumpHoldFrames <
+    MAX_JUMP_HOLD
   ) {
 
-    player.velocityY -= 0.45;
+    player.velocityY -=
+      0.45;
 
     jumpHoldFrames++;
+
   }
 
 
-  player.velocityY += gravity;
+  player.velocityY +=
+    gravity;
 
-  player.y += player.velocityY;
+  player.y +=
+    player.velocityY;
 
 
   const floor =
@@ -397,16 +584,24 @@ function updatePlayer() {
     player.height;
 
 
-  if (player.y >= floor) {
+  if (
+    player.y >= floor
+  ) {
 
-    player.y = floor;
+    player.y =
+      floor;
 
-    player.velocityY = 0;
+    player.velocityY =
+      0;
 
-    player.jumping = false;
+    player.jumping =
+      false;
 
-    jumpHoldFrames = 0;
+    jumpHoldFrames =
+      0;
+
   }
+
 }
 
 
@@ -435,7 +630,9 @@ function createObstacle() {
 
   // NIVEL 2
 
-  if (level >= 2) {
+  if (
+    level >= 2
+  ) {
 
     types.push({
 
@@ -446,9 +643,8 @@ function createObstacle() {
     });
 
 
-    // Obstáculo aéreo alto
-
     types.push(
+
       {
         type: "flyingHigh",
         width: 55,
@@ -460,17 +656,20 @@ function createObstacle() {
         width: 55,
         height: 35
       }
+
     );
+
   }
 
 
   // NIVEL 3
 
-  if (level >= 3) {
-
-    // Obstáculo aéreo bajo
+  if (
+    level >= 3
+  ) {
 
     types.push(
+
       {
         type: "flyingLow",
         width: 55,
@@ -482,7 +681,9 @@ function createObstacle() {
         width: 55,
         height: 35
       }
+
     );
+
   }
 
 
@@ -499,19 +700,23 @@ function createObstacle() {
 
 
   if (
-    type.type === "flyingHigh"
+    type.type ===
+    "flyingHigh"
   ) {
 
     y =
       groundY - 155;
+
   }
 
   else if (
-    type.type === "flyingLow"
+    type.type ===
+    "flyingLow"
   ) {
 
     y =
       groundY - 105;
+
   }
 
   else {
@@ -519,6 +724,7 @@ function createObstacle() {
     y =
       groundY -
       type.height;
+
   }
 
 
@@ -527,7 +733,7 @@ function createObstacle() {
     x:
       canvas.width + 30,
 
-    y: y,
+    y,
 
     width:
       type.width,
@@ -540,7 +746,9 @@ function createObstacle() {
 
     passed:
       false
+
   });
+
 }
 
 
@@ -548,55 +756,68 @@ function createObstacle() {
 // DIBUJAR OBSTÁCULOS
 // ==========================================
 
-function drawObstacle(obstacle) {
+function drawObstacle(
+  obstacle
+) {
 
   if (
-    obstacle.type === "small"
+    obstacle.type ===
+    "small"
   ) {
 
     ctx.fillStyle =
       "#6B7280";
+
   }
 
   else if (
-    obstacle.type === "tall"
+    obstacle.type ===
+    "tall"
   ) {
 
     ctx.fillStyle =
       "#7C3AED";
+
   }
 
   else if (
-    obstacle.type === "wide"
+    obstacle.type ===
+    "wide"
   ) {
 
     ctx.fillStyle =
       "#B45309";
+
   }
 
   else if (
-    obstacle.type === "flyingHigh"
+    obstacle.type ===
+    "flyingHigh"
   ) {
 
     ctx.fillStyle =
       "#DC2626";
+
   }
 
-  else if (
-    obstacle.type === "flyingLow"
-  ) {
+  else {
 
     ctx.fillStyle =
       "#F97316";
+
   }
 
 
   ctx.fillRect(
+
     obstacle.x,
     obstacle.y,
+
     obstacle.width,
     obstacle.height
+
   );
+
 }
 
 
@@ -619,7 +840,7 @@ function updateObstacles() {
     obstacleTimer = 0;
 
 
-    let minDistance =
+    const minDistance =
       95 -
       Math.min(
         level * 3,
@@ -632,6 +853,7 @@ function updateObstacles() {
       Math.floor(
         Math.random() * 75
       );
+
   }
 
 
@@ -676,6 +898,7 @@ function updateObstacles() {
         true;
 
       score += 25;
+
     }
 
 
@@ -691,8 +914,11 @@ function updateObstacles() {
         i,
         1
       );
+
     }
+
   }
+
 }
 
 
@@ -709,9 +935,9 @@ function createCollectible() {
   let collectible;
 
 
-  // 60% - +50
-
-  if (random < 0.60) {
+  if (
+    random < 0.60
+  ) {
 
     collectible = {
 
@@ -722,13 +948,14 @@ function createCollectible() {
       color: "#FFD700",
 
       size: 22
+
     };
+
   }
 
-
-  // 30% - +100
-
-  else if (random < 0.90) {
+  else if (
+    random < 0.90
+  ) {
 
     collectible = {
 
@@ -739,11 +966,10 @@ function createCollectible() {
       color: "#22D3EE",
 
       size: 24
+
     };
+
   }
-
-
-  // 10% - +250
 
   else {
 
@@ -756,16 +982,16 @@ function createCollectible() {
       color: "#F59E0B",
 
       size: 28
+
     };
+
   }
 
 
   const heights = [
 
     groundY - 100,
-
     groundY - 160,
-
     groundY - 220
 
   ];
@@ -804,6 +1030,7 @@ function createCollectible() {
       collectible.color
 
   });
+
 }
 
 
@@ -811,7 +1038,9 @@ function createCollectible() {
 // DIBUJAR COLECCIONABLE
 // ==========================================
 
-function drawCollectible(item) {
+function drawCollectible(
+  item
+) {
 
   ctx.fillStyle =
     item.color;
@@ -821,6 +1050,7 @@ function drawCollectible(item) {
 
 
   ctx.arc(
+
     item.x +
     item.width / 2,
 
@@ -832,6 +1062,7 @@ function drawCollectible(item) {
     0,
 
     Math.PI * 2
+
   );
 
 
@@ -841,12 +1072,11 @@ function drawCollectible(item) {
   ctx.strokeStyle =
     "#FFFFFF";
 
-
   ctx.lineWidth =
     2;
 
-
   ctx.stroke();
+
 }
 
 
@@ -867,14 +1097,17 @@ function updateCollectibles() {
     createCollectible();
 
 
-    collectibleTimer = 0;
+    collectibleTimer =
+      0;
 
 
     nextCollectible =
       150 +
       Math.floor(
-        Math.random() * 130
+        Math.random() *
+        130
       );
+
   }
 
 
@@ -918,6 +1151,7 @@ function updateCollectibles() {
 
 
       continue;
+
     }
 
 
@@ -931,8 +1165,11 @@ function updateCollectibles() {
         i,
         1
       );
+
     }
+
   }
+
 }
 
 
@@ -940,7 +1177,9 @@ function updateCollectibles() {
 // COLISIÓN CON COLECCIONABLE
 // ==========================================
 
-function checkCollectibleCollision(item) {
+function checkCollectibleCollision(
+  item
+) {
 
   return (
 
@@ -961,6 +1200,7 @@ function checkCollectibleCollision(item) {
     item.y
 
   );
+
 }
 
 
@@ -968,7 +1208,9 @@ function checkCollectibleCollision(item) {
 // RECOGER OBJETO
 // ==========================================
 
-function collectItem(item) {
+function collectItem(
+  item
+) {
 
   score +=
     item.value *
@@ -978,14 +1220,18 @@ function collectItem(item) {
   combo++;
 
 
-  if (combo > 5) {
+  if (
+    combo > 5
+  ) {
 
     combo = 5;
+
   }
 
 
   comboTimer =
     COMBO_TIME;
+
 }
 
 
@@ -1000,12 +1246,15 @@ function updateCombo() {
   ) {
 
     comboTimer--;
+
   }
 
   else {
 
     combo = 1;
+
   }
+
 }
 
 
@@ -1016,6 +1265,7 @@ function drawCombo() {
   ) {
 
     return;
+
   }
 
 
@@ -1028,21 +1278,26 @@ function drawCombo() {
 
 
   ctx.fillText(
+
     "COMBO x" +
     combo,
 
     780,
 
     55
+
   );
+
 }
 
 
 // ==========================================
-// COLISIÓN CON OBSTÁCULO
+// COLISIÓN CON OBSTÁCULOS
 // ==========================================
 
-function checkCollision(obstacle) {
+function checkCollision(
+  obstacle
+) {
 
   const paddingX = 7;
   const paddingY = 5;
@@ -1089,7 +1344,9 @@ function checkCollision(obstacle) {
   ) {
 
     endGame();
+
   }
+
 }
 
 
@@ -1098,8 +1355,6 @@ function checkCollision(obstacle) {
 // ==========================================
 
 function updateLevel() {
-
-  // CADA 500 PUNTOS
 
   const newLevel =
     Math.floor(
@@ -1118,7 +1373,9 @@ function updateLevel() {
 
     levelMessageTimer =
       120;
+
   }
+
 }
 
 
@@ -1127,8 +1384,6 @@ function updateLevel() {
 // ==========================================
 
 function updateDifficulty() {
-
-  // +0.5 CADA 200 PUNTOS
 
   const speedIncrease =
     Math.floor(
@@ -1148,7 +1403,9 @@ function updateDifficulty() {
 
     gameSpeed =
       MAX_SPEED;
+
   }
+
 }
 
 
@@ -1163,6 +1420,7 @@ function drawLevelMessage() {
   ) {
 
     return;
+
   }
 
 
@@ -1194,11 +1452,14 @@ function drawLevelMessage() {
 
 
   ctx.fillText(
-    "LEVEL " + level,
+
+    "LEVEL " +
+    level,
 
     canvas.width / 2,
 
     220
+
   );
 
 
@@ -1211,21 +1472,27 @@ function drawLevelMessage() {
 
 
   ctx.fillText(
+
     "¡Nuevo nivel!",
 
     canvas.width / 2,
 
     252
+
   );
 
 
   ctx.restore();
 
 
-  if (!paused) {
+  if (
+    !paused
+  ) {
 
     levelMessageTimer--;
+
   }
+
 }
 
 
@@ -1235,12 +1502,16 @@ function drawLevelMessage() {
 
 function endGame() {
 
-  gameOver =
-    true;
+  gameOver = true;
+
+
+  jumpHeld = false;
 
 
   const finalScore =
-    Math.floor(score);
+    Math.floor(
+      score
+    );
 
 
   if (
@@ -1253,10 +1524,15 @@ function endGame() {
 
 
     localStorage.setItem(
+
       "levelUpHighScore",
+
       highScore
+
     );
+
   }
+
 }
 
 
@@ -1302,7 +1578,8 @@ function restartGame() {
     player.height;
 
 
-  player.velocityY = 0;
+  player.velocityY =
+    0;
 
   player.jumping =
     false;
@@ -1316,21 +1593,27 @@ function restartGame() {
     0;
 
 
+  runFrame =
+    0;
+
+  runAnimationTimer =
+    0;
+
+
   gameOver =
     false;
-
 
   paused =
     false;
 
-
   gameStarted =
     true;
+
 }
 
 
 // ==========================================
-// INTERFAZ
+// INTERFAZ DURANTE PARTIDA
 // ==========================================
 
 function drawUI() {
@@ -1355,63 +1638,98 @@ function drawUI() {
 
 
   ctx.fillText(
+
     "PUNTOS: " +
     Math.floor(score),
 
     25,
-
     72
+
   );
 
 
   ctx.fillText(
+
     "RÉCORD: " +
     highScore,
 
     25,
-
     100
+
   );
 
 
   ctx.fillText(
+
     "NIVEL: " +
     level,
 
     25,
-
     128
+
   );
 
 
   ctx.fillText(
+
     "VELOCIDAD: " +
     gameSpeed.toFixed(1),
 
     25,
-
     156
+
   );
+
 }
 
 
 // ==========================================
-// PANTALLA INICIAL
+// PANTALLA DE INICIO
 // ==========================================
 
 function drawStartScreen() {
 
-  ctx.fillStyle =
-    "rgba(0,0,0,0.45)";
+  if (
+
+    startScreenImage.complete &&
+    startScreenImage.naturalWidth > 0
+
+  ) {
+
+    ctx.drawImage(
+
+      startScreenImage,
+
+      0,
+      0,
+
+      canvas.width,
+      canvas.height
+
+    );
+
+  }
+
+  else {
+
+    ctx.fillStyle =
+      "#0B5EB7";
 
 
-  ctx.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+    ctx.fillRect(
 
+      0,
+      0,
+
+      canvas.width,
+      canvas.height
+
+    );
+
+  }
+
+
+  // RÉCORD REAL
 
   ctx.textAlign =
     "center";
@@ -1422,51 +1740,113 @@ function drawStartScreen() {
 
 
   ctx.font =
-    "bold 60px Arial";
+    "bold 26px monospace";
 
 
   ctx.fillText(
-    "LEVEL UP",
 
-    canvas.width / 2,
+    highScore,
 
-    170
-  );
+    105,
 
+    190
 
-  ctx.font =
-    "21px Arial";
-
-
-  ctx.fillText(
-    "ESPACIO = comenzar / saltar",
-
-    canvas.width / 2,
-
-    290
-  );
-
-
-  ctx.fillText(
-    "Mantén ESPACIO = salto alto",
-
-    canvas.width / 2,
-
-    325
-  );
-
-
-  ctx.fillText(
-    "En celular toca la pantalla",
-
-    canvas.width / 2,
-
-    360
   );
 
 
   ctx.textAlign =
     "left";
+
+}
+
+
+// ==========================================
+// GAME OVER
+// ==========================================
+
+function drawGameOver() {
+
+  if (
+
+    gameOverImage.complete &&
+    gameOverImage.naturalWidth > 0
+
+  ) {
+
+    ctx.drawImage(
+
+      gameOverImage,
+
+      0,
+      0,
+
+      canvas.width,
+      canvas.height
+
+    );
+
+  }
+
+  else {
+
+    ctx.fillStyle =
+      "#160A35";
+
+
+    ctx.fillRect(
+
+      0,
+      0,
+
+      canvas.width,
+      canvas.height
+
+    );
+
+  }
+
+
+  // PUNTUACIÓN REAL
+
+  ctx.textAlign =
+    "center";
+
+
+  ctx.fillStyle =
+    "#FFFFFF";
+
+
+  ctx.font =
+    "bold 26px monospace";
+
+
+  ctx.fillText(
+
+    Math.floor(score),
+
+    145,
+
+    205
+
+  );
+
+
+  // RÉCORD REAL
+
+  ctx.fillText(
+
+    highScore,
+
+    855,
+
+    205
+
+  );
+
+
+  ctx.textAlign =
+    "left";
+
 }
 
 
@@ -1477,14 +1857,17 @@ function drawStartScreen() {
 function drawPauseScreen() {
 
   ctx.fillStyle =
-    "rgba(0,0,0,0.55)";
+    "rgba(0,0,0,0.60)";
 
 
   ctx.fillRect(
+
     0,
     0,
+
     canvas.width,
     canvas.height
+
   );
 
 
@@ -1497,124 +1880,38 @@ function drawPauseScreen() {
 
 
   ctx.font =
-    "bold 50px Arial";
+    "bold 54px Arial";
 
 
   ctx.fillText(
+
     "PAUSA",
 
     canvas.width / 2,
 
-    220
+    230
+
   );
 
 
   ctx.font =
-    "21px Arial";
+    "20px Arial";
 
 
   ctx.fillText(
+
     "Presiona P para continuar",
 
     canvas.width / 2,
 
-    270
-  );
-
-
-  ctx.textAlign =
-    "left";
-}
-
-
-// ==========================================
-// GAME OVER
-// ==========================================
-
-function drawGameOver() {
-
-  ctx.fillStyle =
-    "rgba(0,0,0,0.65)";
-
-
-  ctx.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-
-  ctx.textAlign =
-    "center";
-
-
-  ctx.fillStyle =
-    "#FFFFFF";
-
-
-  ctx.font =
-    "bold 55px Arial";
-
-
-  ctx.fillText(
-    "GAME OVER",
-
-    canvas.width / 2,
-
-    175
-  );
-
-
-  ctx.font =
-    "bold 25px Arial";
-
-
-  ctx.fillText(
-    "PUNTOS: " +
-    Math.floor(score),
-
-    canvas.width / 2,
-
-    235
-  );
-
-
-  ctx.fillText(
-    "RÉCORD: " +
-    highScore,
-
-    canvas.width / 2,
-
     275
-  );
 
-
-  ctx.fillText(
-    "NIVEL: " +
-    level,
-
-    canvas.width / 2,
-
-    315
-  );
-
-
-  ctx.font =
-    "19px Arial";
-
-
-  ctx.fillText(
-    "ESPACIO o toca para volver a jugar",
-
-    canvas.width / 2,
-
-    370
   );
 
 
   ctx.textAlign =
     "left";
+
 }
 
 
@@ -1623,32 +1920,37 @@ function drawGameOver() {
 // ==========================================
 
 document.addEventListener(
+
   "keydown",
+
   function(e) {
 
 
     // PAUSA
 
     if (
+
       e.code === "KeyP" &&
       gameStarted &&
       !gameOver
+
     ) {
 
       paused =
         !paused;
 
       return;
+
     }
 
 
-    // ESPACIO
-
     if (
-      e.code !== "Space"
+      e.code !==
+      "Space"
     ) {
 
       return;
+
     }
 
 
@@ -1657,34 +1959,47 @@ document.addEventListener(
 
     // INICIAR
 
-    if (!gameStarted) {
+    if (
+      !gameStarted
+    ) {
 
       gameStarted =
         true;
 
       return;
+
     }
 
 
-    if (paused) {
+    // PAUSADO
+
+    if (
+      paused
+    ) {
 
       return;
+
     }
 
 
     // REINICIAR
 
-    if (gameOver) {
+    if (
+      gameOver
+    ) {
 
       restartGame();
 
       return;
+
     }
 
 
     // SALTO
 
-    if (!player.jumping) {
+    if (
+      !player.jumping
+    ) {
 
       player.velocityY =
         -14.5;
@@ -1700,33 +2015,41 @@ document.addEventListener(
 
       jumpHoldFrames =
         0;
+
     }
 
     else {
 
       jumpHeld =
         true;
+
     }
 
   }
+
 );
 
 
 // SOLTAR ESPACIO
 
 document.addEventListener(
+
   "keyup",
+
   function(e) {
 
     if (
-      e.code === "Space"
+      e.code ===
+      "Space"
     ) {
 
       jumpHeld =
         false;
+
     }
 
   }
+
 );
 
 
@@ -1735,7 +2058,9 @@ document.addEventListener(
 // ==========================================
 
 canvas.addEventListener(
+
   "touchstart",
+
   function(e) {
 
     e.preventDefault();
@@ -1743,34 +2068,45 @@ canvas.addEventListener(
 
     // INICIAR
 
-    if (!gameStarted) {
+    if (
+      !gameStarted
+    ) {
 
       gameStarted =
         true;
 
       return;
+
     }
 
 
-    if (paused) {
+    if (
+      paused
+    ) {
 
       return;
+
     }
 
 
     // REINICIAR
 
-    if (gameOver) {
+    if (
+      gameOver
+    ) {
 
       restartGame();
 
       return;
+
     }
 
 
     // SALTO
 
-    if (!player.jumping) {
+    if (
+      !player.jumping
+    ) {
 
       player.velocityY =
         -14.5;
@@ -1786,12 +2122,14 @@ canvas.addEventListener(
 
       jumpHoldFrames =
         0;
+
     }
 
     else {
 
       jumpHeld =
         true;
+
     }
 
   },
@@ -1799,13 +2137,14 @@ canvas.addEventListener(
   {
     passive: false
   }
+
 );
 
 
-// SOLTAR DEDO
-
 canvas.addEventListener(
+
   "touchend",
+
   function(e) {
 
     e.preventDefault();
@@ -1818,6 +2157,7 @@ canvas.addEventListener(
   {
     passive: false
   }
+
 );
 
 
@@ -1827,17 +2167,21 @@ canvas.addEventListener(
 
 function gameLoop() {
 
-  drawBackground();
+  // ESCENARIO
 
-  updateClouds();
+  drawBackground();
 
   drawGround();
 
 
+  // JUEGO ACTIVO
+
   if (
+
     gameStarted &&
     !gameOver &&
     !paused
+
   ) {
 
     updatePlayer();
@@ -1849,47 +2193,75 @@ function gameLoop() {
     updateCombo();
 
 
-    // PUNTOS POR SOBREVIVIR
-
-    score += 0.1;
+    score +=
+      0.1;
 
 
     updateLevel();
 
     updateDifficulty();
+
   }
 
+
+  // PERSONAJE
 
   drawBible();
 
-  drawUI();
 
-  drawCombo();
+  // INTERFAZ
 
-  drawLevelMessage();
+  if (
+    gameStarted &&
+    !gameOver
+  ) {
+
+    drawUI();
+
+    drawCombo();
+
+    drawLevelMessage();
+
+  }
 
 
-  if (!gameStarted) {
+  // INICIO
+
+  if (
+    !gameStarted
+  ) {
 
     drawStartScreen();
+
   }
 
 
-  if (paused) {
+  // PAUSA
+
+  if (
+    paused
+  ) {
 
     drawPauseScreen();
+
   }
 
 
-  if (gameOver) {
+  // GAME OVER
+
+  if (
+    gameOver
+  ) {
 
     drawGameOver();
+
   }
 
 
   requestAnimationFrame(
     gameLoop
   );
+
 }
 
 
