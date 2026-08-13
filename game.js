@@ -1690,47 +1690,151 @@ function drawCombo() {
 // ==========================================
 
 function checkCollision(obstacle) {
+
+  // Caja de colisión del personaje
   const paddingX = 16;
   const paddingY = 12;
 
-  const playerLeft = player.x + paddingX;
-  const playerRight = player.x + player.width - paddingX;
-  const playerTop = player.y + paddingY;
-  const playerBottom = player.y + player.height - paddingY;
+  const playerLeft =
+    player.x + paddingX;
+
+  const playerRight =
+    player.x +
+    player.width -
+    paddingX;
+
+  const playerTop =
+    player.y + paddingY;
+
+  const playerBottom =
+    player.y +
+    player.height -
+    paddingY;
+
+
+  // Caja del obstáculo
+  let obstaclePaddingX = 4;
+  let obstaclePaddingY = 4;
+
+
+  // ==========================
+  // CUERVO
+  // ==========================
+
+  if (obstacle.type === "raven") {
+
+    obstaclePaddingX = 8;
+    obstaclePaddingY = 8;
+
+  }
+
+
+  // ==========================
+  // DIABLO
+  // ==========================
+
+  if (obstacle.type === "devil") {
+
+    obstaclePaddingX = 8;
+    obstaclePaddingY = 8;
+
+  }
+
+
+  const obstacleLeft =
+    obstacle.x +
+    obstaclePaddingX;
+
+  const obstacleRight =
+    obstacle.x +
+    obstacle.width -
+    obstaclePaddingX;
+
+  const obstacleTop =
+    obstacle.y +
+    obstaclePaddingY;
+
+  const obstacleBottom =
+    obstacle.y +
+    obstacle.height -
+    obstaclePaddingY;
+
 
   const collision = (
-    playerRight > obstacle.x &&
-    playerLeft < obstacle.x + obstacle.width &&
-    playerBottom > obstacle.y &&
-    playerTop < obstacle.y + obstacle.height
+
+    playerRight >
+    obstacleLeft &&
+
+    playerLeft <
+    obstacleRight &&
+
+    playerBottom >
+    obstacleTop &&
+
+    playerTop <
+    obstacleBottom
+
   );
 
-  if (!collision) return;
 
-  // ⚔️ Espada: destruye el próximo obstáculo tocado
+  if (!collision) {
+
+    return;
+
+  }
+
+
+  // ==========================
+  // ESPADA
+  // ==========================
+
   if (swordActive) {
+
     swordActive = false;
+
     obstacle.destroyed = true;
+
     return;
+
   }
 
-  // 🛡️ Escudo: absorbe un golpe
+
+  // ==========================
+  // ESCUDO
+  // ==========================
+
   if (shieldActive) {
+
     shieldActive = false;
+
     obstacle.destroyed = true;
+
     return;
+
   }
 
-  // ❤️ Corazón: una vida extra
+
+  // ==========================
+  // VIDA EXTRA
+  // ==========================
+
   if (extraLives > 0) {
+
     extraLives--;
+
     obstacle.destroyed = true;
+
     return;
+
   }
+
+
+  // ==========================
+  // GAME OVER
+  // ==========================
 
   endGame();
 }
-
 
 // ==========================================
 // NIVEL
@@ -2189,7 +2293,7 @@ function drawGameOver() {
 
     highScore,
 
-    1150,
+    1100,
 
     290
 
