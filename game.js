@@ -2178,7 +2178,7 @@ function drawGameOver() {
 
     185,
 
-    215
+    315
 
   );
 
@@ -2189,9 +2189,9 @@ function drawGameOver() {
 
     highScore,
 
-    850,
+    1000,
 
-    215
+    315
 
   );
 
