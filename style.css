@@ -12,7 +12,15 @@ body {
   background: #000;
 }
 
-body {
+/* CONTENEDOR */
+#game-container {
+  position: fixed;
+
+  top: 50%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+
   display: flex;
   justify-content: center;
   align-items: center;
@@ -20,19 +28,14 @@ body {
 
 
 /* ==========================================
-   PC / CELULAR HORIZONTAL
+   JUEGO
    ========================================== */
 
 #game {
   display: block;
 
-  aspect-ratio: 16 / 9;
-
-  width: 100vw;
-  height: auto;
-
-  max-width: 100vw;
-  max-height: 100vh;
+  width: 100%;
+  height: 100%;
 
   image-rendering: pixelated;
   image-rendering: crisp-edges;
@@ -42,28 +45,47 @@ body {
 
 
 /* ==========================================
+   PC O CELULAR HORIZONTAL
+   ========================================== */
+
+@media (orientation: landscape) {
+
+  #game-container {
+
+    width: min(100vw, calc(100vh * 16 / 9));
+
+    height: min(
+      100vh,
+      calc(100vw * 9 / 16)
+    );
+
+  }
+
+}
+
+
+/* ==========================================
    CELULAR VERTICAL
    ========================================== */
 
 @media (orientation: portrait) {
 
-  #game {
-    position: fixed;
+  #game-container {
 
-    top: 50%;
-    left: 50%;
-
+    /* ANTES DE ROTAR */
     width: 100vh;
-    height: calc(100vh * 9 / 16);
 
-    max-width: none;
-    max-height: none;
+    height: calc(
+      100vh * 9 / 16
+    );
 
     transform:
       translate(-50%, -50%)
       rotate(90deg);
 
-    transform-origin: center center;
+    transform-origin:
+      center center;
+
   }
 
 }
