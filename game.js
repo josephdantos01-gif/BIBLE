@@ -257,13 +257,12 @@ let powerUpTimer = 0;
 let nextPowerUp = 1000;
 
 // Estados
-let extraLives = 0;
-let shieldActive = false;
-let swordActive = false;
+// ==========================================
+// SISTEMA DE VIDAS
+// ==========================================
 
-const MAX_EXTRA_LIVES = 3;
-let collectibleTimer = 0;
-let nextCollectible = 180;
+let lives = 3;
+const MAX_LIVES = 3;
 
 
 // ==========================================
@@ -989,6 +988,24 @@ function updateObstacles() {
       continue;
     }
 
+    function drawLives() {
+
+  const heartSize = 42;
+  const spacing = 10;
+
+  for (let i = 0; i < lives; i++) {
+
+    ctx.drawImage(
+      powerUpImages.heart,
+
+      25 + i * (heartSize + spacing),
+      20,
+
+      heartSize,
+      heartSize
+    );
+  }
+}
 
     // BONUS POR SUPERAR
 
@@ -1479,20 +1496,13 @@ function activatePowerUp(powerUp) {
 
   // ❤️ VIDA EXTRA
 
-  if (
-    powerUp.type === "heart"
-  ) {
+if (powerUp.type === "heart") {
 
-    if (
-      extraLives <
-      MAX_EXTRA_LIVES
-    ) {
-
-      extraLives++;
-
-    }
-
+  if (lives < MAX_LIVES) {
+    lives++;
   }
+
+}
 
 
   // 🛡️ ESCUDO
@@ -1818,15 +1828,24 @@ function checkCollision(obstacle) {
   // VIDA EXTRA
   // ==========================
 
-  if (extraLives > 0) {
+  // ==========================
+// PERDER UNA VIDA
+// ==========================
 
-    extraLives--;
+lives--;
 
-    obstacle.destroyed = true;
+obstacle.destroyed = true;
 
-    return;
 
-  }
+// Todavía quedan vidas
+if (lives > 0) {
+
+  return;
+}
+
+
+// Sin vidas = GAME OVER
+endGame();
 
 
   // ==========================
@@ -2055,8 +2074,7 @@ function restartGame() {
   nextCollectible = 180;
 
   nextPowerUp = 1000;
-
-  extraLives = 0;
+  lives = MAX_LIVES;
   shieldActive = false;
   swordActive = false;
 
@@ -2675,7 +2693,7 @@ function gameLoop() {
   ) {
 
     drawUI();
-
+    drawLives();  
     drawCombo();
 
     drawLevelMessage();
