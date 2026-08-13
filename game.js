@@ -222,8 +222,8 @@ const player = {
   x: 120,
   y: groundY - 85,
 
-  width: 70,
-  height: 85,
+  width: 90,
+  height: 110,
 
   velocityY: 0,
   jumping: false
@@ -730,32 +730,32 @@ function createObstacle() {
     // PIEDRA
     {
       type: "rock",
-      width: 45,
-      height: 40,
+      width: 75,
+      height: 65,
       position: "ground"
     },
 
     // FUEGO
     {
       type: "fire",
-      width: 45,
-      height: 55,
+      width: 65,
+      height: 85,
       position: "ground"
     },
 
     // SERPIENTE
     {
       type: "snake",
-      width: 65,
-      height: 38,
+      width: 100,
+      height: 60,
       position: "ground"
     },
 
     // MURO / ESCOMBROS
     {
       type: "wall",
-      width: 85,
-      height: 55,
+      width: 120,
+      height: 85,
       position: "ground"
     }
 
@@ -771,8 +771,8 @@ function createObstacle() {
 
     types.push({
       type: "raven",
-      width: 75,
-      height: 55,
+      width: 110,
+      height: 80,
       position: "airHigh"
     });
 
@@ -788,8 +788,8 @@ function createObstacle() {
 
     types.push({
       type: "devil",
-      width: 65,
-      height: 65,
+      width: 100,
+      height: 100,
       position: "airLow"
     });
 
@@ -1053,7 +1053,7 @@ function createCollectible() {
 
       color: "#FFD700",
 
-      size: 22
+      size: 55
 
     };
 
@@ -1071,7 +1071,7 @@ function createCollectible() {
 
       color: "#22D3EE",
 
-      size: 24
+      size: 60
 
     };
 
@@ -1087,7 +1087,7 @@ function createCollectible() {
 
       color: "#F59E0B",
 
-      size: 28
+      size: 65
 
     };
 
@@ -1341,8 +1341,8 @@ function createPowerUp() {
 
     powerUp = {
       type: "heart",
-      width: 38,
-      height: 38
+      width: 60,
+      height: 60
     };
 
   }
@@ -1353,8 +1353,8 @@ function createPowerUp() {
 
     powerUp = {
       type: "shield",
-      width: 42,
-      height: 48
+      width: 65,
+      height: 70
     };
 
   }
@@ -1365,8 +1365,8 @@ function createPowerUp() {
 
     powerUp = {
       type: "sword",
-      width: 32,
-      height: 55
+      width: 55,
+      height: 85
     };
 
   }
@@ -1377,8 +1377,8 @@ function createPowerUp() {
 
     powerUp = {
       type: "scroll",
-      width: 48,
-      height: 38
+      width: 75,
+      height: 60
     };
 
   }
@@ -1690,8 +1690,8 @@ function drawCombo() {
 // ==========================================
 
 function checkCollision(obstacle) {
-  const paddingX = 7;
-  const paddingY = 5;
+  const paddingX = 16;
+  const paddingY = 12;
 
   const playerLeft = player.x + paddingX;
   const playerRight = player.x + player.width - paddingX;
