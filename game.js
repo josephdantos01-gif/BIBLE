@@ -1,8 +1,8 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-canvas.width = 1000;
-canvas.height = 500;
+canvas.width = 1280;
+canvas.height = 720;
 
 
 // ==========================================
@@ -401,6 +401,19 @@ function drawBackground() {
     );
 
   }
+
+// ==========================================
+// RELLENO ENTRE BOSQUE Y SUELO
+// ==========================================
+
+ctx.fillStyle = "#2466A8";
+
+ctx.fillRect(
+  0,
+  400,
+  canvas.width,
+  groundY - 400
+);
 
 
   // ------------------------------------------
