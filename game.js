@@ -488,101 +488,62 @@ function drawBible() {
 
   let imageToDraw;
 
-// PERSONAJE GOLPEADO
-if (playerHit) {
-
-  imageToDraw = playerImages.hit;
-
-}
-  // GAME OVER
-  if (gameOver) {
-
-    imageToDraw =
-      playerImages.hit;
-
+  // PERSONAJE GOLPEADO
+  if (playerHit) {
+    imageToDraw = playerImages.hit;
   }
 
+  // GAME OVER
+  else if (gameOver) {
+    imageToDraw = playerImages.hit;
+  }
 
   // SALTANDO
-  else if (
-    player.jumping
-  ) {
-
-    imageToDraw =
-      playerImages.jump;
-
+  else if (player.jumping) {
+    imageToDraw = playerImages.jump;
   }
-
 
   // ANTES DE INICIAR
-  else if (
-    !gameStarted
-  ) {
-
-    imageToDraw =
-      playerImages.idle;
-
+  else if (!gameStarted) {
+    imageToDraw = playerImages.idle;
   }
-
 
   // CORRIENDO
   else {
-
     if (!paused) {
-
       runAnimationTimer++;
-
     }
 
-
-    if (
-      runAnimationTimer >=
-      RUN_ANIMATION_SPEED
-    ) {
-
+    if (runAnimationTimer >= RUN_ANIMATION_SPEED) {
       runFrame++;
 
-      if (
-        runFrame > 1
-      ) {
-
+      if (runFrame > 1) {
         runFrame = 0;
-
       }
 
       runAnimationTimer = 0;
-
     }
-
 
     imageToDraw =
       runFrame === 0
         ? playerImages.run1
         : playerImages.run2;
-
   }
-
 
   if (
     imageToDraw &&
     imageToDraw.complete &&
     imageToDraw.naturalWidth > 0
   ) {
-
     ctx.drawImage(
       imageToDraw,
-
       player.x,
       player.y,
-
       player.width,
       player.height
     );
-
   } else {
-
-    ctx.fillStyle =
-      "#1947A3";
+    ctx.fillStyle = "#1947A3";
 
     ctx.fillRect(
       player.x,
@@ -590,9 +551,7 @@ if (playerHit) {
       player.width,
       player.height
     );
-
   }
-
 }
 
 
@@ -662,73 +621,56 @@ function createObstacle() {
     // PIEDRA
     {
       type: "rock",
-      width: 75,
-      height: 65,
+      width: 95,
+      height: 80,
       position: "ground"
     },
 
     // FUEGO
     {
       type: "fire",
-      width: 65,
-      height: 85,
+      width: 85,
+      height: 110,
       position: "ground"
     },
 
     // SERPIENTE
     {
       type: "snake",
-      width: 100,
-      height: 60,
+      width: 130,
+      height: 75,
       position: "ground"
     },
 
     // MURO / ESCOMBROS
     {
       type: "wall",
-      width: 120,
-      height: 85,
+      width: 150,
+      height: 105,
       position: "ground"
     }
 
   ];
 
-
-  // ==========================
-  // NIVEL 2
-  // Aparece el cuervo
-  // ==========================
-
+  // NIVEL 2: CUERVO
   if (level >= 2) {
-
     types.push({
       type: "raven",
       width: 110,
       height: 80,
       position: "airHigh"
     });
-
   }
 
-
-  // ==========================
-  // NIVEL 3
-  // Aparece el diablo
-  // ==========================
-
+  // NIVEL 3: DIABLO
   if (level >= 3) {
-
     types.push({
       type: "devil",
       width: 100,
       height: 100,
       position: "airLow"
     });
-
   }
-
-
-  // Elegir obstáculo aleatorio
 
   const obstacleType =
     types[
@@ -738,69 +680,37 @@ function createObstacle() {
       )
     ];
 
-
   let y;
 
-
   // TERRESTRES
-
-  if (
-    obstacleType.position ===
-    "ground"
-  ) {
-
+  if (obstacleType.position === "ground") {
     y =
       groundY -
       obstacleType.height;
-
   }
 
-
-  // AÉREO ALTO
-
-  else if (
-    obstacleType.position ===
-    "airHigh"
-  ) {
-
+  // CUERVO: MÁS ARRIBA
+  else if (obstacleType.position === "airHigh") {
     y =
-      groundY - 190;
-
+      groundY - 280;
   }
 
-
-  // AÉREO BAJO
-
+  // DIABLO: MÁS ARRIBA
   else {
-
     y =
-      groundY - 120;
-
+      groundY - 210;
   }
-
 
   obstacles.push({
-
-    x:
-      canvas.width + 30,
-
+    x: canvas.width + 30,
     y: y,
-
-    width:
-      obstacleType.width,
-
-    height:
-      obstacleType.height,
-
-    type:
-      obstacleType.type,
-
-    passed:
-      false
-
+    width: obstacleType.width,
+    height: obstacleType.height,
+    type: obstacleType.type,
+    passed: false
   });
-
 }
+
 
 // ==========================================
 // DIBUJAR OBSTÁCULOS
@@ -1614,6 +1524,11 @@ function drawCombo() {
 
 function checkCollision(obstacle) {
 
+  // Durante el efecto de golpe no recibe otro daño
+  if (playerHit && !gameOver) {
+    return;
+  }
+
   const paddingX = 16;
   const paddingY = 12;
 
@@ -1658,35 +1573,32 @@ function checkCollision(obstacle) {
     return;
   }
 
-  // ESPADA: destruye el obstáculo sin perder vida.
+  // ESPADA
   if (swordActive) {
     swordActive = false;
     obstacle.destroyed = true;
     return;
   }
 
-  // ESCUDO: absorbe el golpe.
+  // ESCUDO
   if (shieldActive) {
     shieldActive = false;
     obstacle.destroyed = true;
     return;
   }
 
-  // GOLPE NORMAL: pierde una vida.
-lives--;
+  // GOLPE NORMAL
+  lives--;
+  obstacle.destroyed = true;
 
-obstacle.destroyed = true;
+  playerHit = true;
+  playerHitTimer = HIT_DURATION;
 
-// Mostrar personaje golpeado
-playerHit = true;
-playerHitTimer = HIT_DURATION;
-
-if (lives > 0) {
-  return;
-}
-
-endGame();
+  if (lives > 0) {
+    return;
   }
+
+  endGame();
 }
 
 
@@ -1904,6 +1816,8 @@ function restartGame() {
   lives = MAX_LIVES;
   shieldActive = false;
   swordActive = false;
+  playerHit = false;
+  playerHitTimer = 0;
 
 
   combo = 1;
