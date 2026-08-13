@@ -220,7 +220,7 @@ const RUN_ANIMATION_SPEED = 8;
 const player = {
 
   x: 120,
-  y: groundY - 85,
+  y: groundY - 110,
 
   width: 90,
   height: 110,
@@ -264,6 +264,14 @@ let nextPowerUp = 1000;
 let lives = 3;
 const MAX_LIVES = 3;
 
+// Estados de power-ups
+let shieldActive = false;
+let swordActive = false;
+
+// Temporizadores de coleccionables
+let collectibleTimer = 0;
+let nextCollectible = 180;
+
 
 // ==========================================
 // FONDO / PARALLAX
@@ -271,15 +279,11 @@ const MAX_LIVES = 3;
 
 function drawBackground() {
 
-  // ------------------------------------------
   // CIELO
-  // ------------------------------------------
-
   if (
     skyImage.complete &&
     skyImage.naturalWidth > 0
   ) {
-
     ctx.drawImage(
       skyImage,
       0,
@@ -287,69 +291,43 @@ function drawBackground() {
       canvas.width,
       canvas.height
     );
-
   } else {
-
     ctx.fillStyle = "#41B6E6";
-
     ctx.fillRect(
       0,
       0,
       canvas.width,
       canvas.height
     );
-
   }
 
-
-  // ------------------------------------------
   // MOVER CAPAS
-  // ------------------------------------------
-
   if (
     gameStarted &&
     !gameOver &&
     !paused
   ) {
-
-    mountainOffset -=
-      gameSpeed * 0.08;
-
-    forestOffset -=
-      gameSpeed * 0.20;
-
-    treeOffset -=
-      gameSpeed * 0.45;
-
+    mountainOffset -= gameSpeed * 0.08;
+    forestOffset -= gameSpeed * 0.20;
+    treeOffset -= gameSpeed * 0.45;
   }
 
-
-  // ------------------------------------------
   // MONTAÑAS
-  // ------------------------------------------
-
-  if (
-    mountainOffset <=
-    -canvas.width
-  ) {
-
-    mountainOffset +=
-      canvas.width;
-
+  if (mountainOffset <= -canvas.width) {
+    mountainOffset += canvas.width;
   }
-
 
   if (
     mountainsImage.complete &&
     mountainsImage.naturalWidth > 0
   ) {
-
+    // Las hacemos llegar hasta la línea del suelo.
     ctx.drawImage(
       mountainsImage,
       mountainOffset,
       145,
       canvas.width,
-      275
+      groundY - 145
     );
 
     ctx.drawImage(
@@ -357,86 +335,49 @@ function drawBackground() {
       mountainOffset + canvas.width,
       145,
       canvas.width,
-      275
+      groundY - 145
     );
-
   }
 
-
-  // ------------------------------------------
   // BOSQUE
-  // ------------------------------------------
-
-  if (
-    forestOffset <=
-    -canvas.width
-  ) {
-
-    forestOffset +=
-      canvas.width;
-
+  if (forestOffset <= -canvas.width) {
+    forestOffset += canvas.width;
   }
-
 
   if (
     forestImage.complete &&
     forestImage.naturalWidth > 0
   ) {
-
+    // El bosque baja hasta groundY para que no quede
+    // una franja de color sólido entre bosque y tierra.
     ctx.drawImage(
       forestImage,
       forestOffset,
-      245,
+      235,
       canvas.width,
-      175
+      groundY - 235
     );
 
     ctx.drawImage(
       forestImage,
       forestOffset + canvas.width,
-      245,
+      235,
       canvas.width,
-      175
+      groundY - 235
     );
-
   }
 
-// ==========================================
-// RELLENO ENTRE BOSQUE Y SUELO
-// ==========================================
-
-ctx.fillStyle = "#2466A8";
-
-ctx.fillRect(
-  0,
-  400,
-  canvas.width,
-  groundY - 400
-);
-
-
-  // ------------------------------------------
   // ÁRBOLES INDIVIDUALES
-  // ------------------------------------------
-
   const treeSpacing = 420;
 
-  if (
-    treeOffset <=
-    -treeSpacing
-  ) {
-
-    treeOffset +=
-      treeSpacing;
-
+  if (treeOffset <= -treeSpacing) {
+    treeOffset += treeSpacing;
   }
-
 
   if (
     treeImage.complete &&
     treeImage.naturalWidth > 0
   ) {
-
     const treeWidth = 105;
     const treeHeight = 170;
 
@@ -445,7 +386,6 @@ ctx.fillRect(
       x < canvas.width + treeSpacing;
       x += treeSpacing
     ) {
-
       ctx.drawImage(
         treeImage,
         x,
@@ -453,11 +393,8 @@ ctx.fillRect(
         treeWidth,
         treeHeight
       );
-
     }
-
   }
-
 }
 
 
@@ -974,26 +911,6 @@ function updateObstacles() {
       obstacles.splice(i, 1);
       continue;
     }
-
-    function drawLives() {
-
-  const heartSize = 42;
-  const spacing = 10;
-
-  for (let i = 0; i < lives; i++) {
-
-    ctx.drawImage(
-      powerUpImages.heart,
-
-      25 + i * (heartSize + spacing),
-      20,
-
-      heartSize,
-      heartSize
-    );
-  }
-}
-
     // BONUS POR SUPERAR
 
     if (
@@ -1688,159 +1605,74 @@ function drawCombo() {
 
 function checkCollision(obstacle) {
 
-  // Caja de colisión del personaje
   const paddingX = 16;
   const paddingY = 12;
 
-  const playerLeft =
-    player.x + paddingX;
-
+  const playerLeft = player.x + paddingX;
   const playerRight =
-    player.x +
-    player.width -
-    paddingX;
-
-  const playerTop =
-    player.y + paddingY;
-
+    player.x + player.width - paddingX;
+  const playerTop = player.y + paddingY;
   const playerBottom =
-    player.y +
-    player.height -
-    paddingY;
+    player.y + player.height - paddingY;
 
-
-  // Caja del obstáculo
   let obstaclePaddingX = 4;
   let obstaclePaddingY = 4;
 
-
-  // ==========================
-  // CUERVO
-  // ==========================
-
-  if (obstacle.type === "raven") {
-
+  if (
+    obstacle.type === "raven" ||
+    obstacle.type === "devil"
+  ) {
     obstaclePaddingX = 8;
     obstaclePaddingY = 8;
-
   }
-
-
-  // ==========================
-  // DIABLO
-  // ==========================
-
-  if (obstacle.type === "devil") {
-
-    obstaclePaddingX = 8;
-    obstaclePaddingY = 8;
-
-  }
-
 
   const obstacleLeft =
-    obstacle.x +
-    obstaclePaddingX;
-
+    obstacle.x + obstaclePaddingX;
   const obstacleRight =
     obstacle.x +
     obstacle.width -
     obstaclePaddingX;
-
   const obstacleTop =
-    obstacle.y +
-    obstaclePaddingY;
-
+    obstacle.y + obstaclePaddingY;
   const obstacleBottom =
     obstacle.y +
     obstacle.height -
     obstaclePaddingY;
 
-
-  const collision = (
-
-    playerRight >
-    obstacleLeft &&
-
-    playerLeft <
-    obstacleRight &&
-
-    playerBottom >
-    obstacleTop &&
-
-    playerTop <
-    obstacleBottom
-
-  );
-
+  const collision =
+    playerRight > obstacleLeft &&
+    playerLeft < obstacleRight &&
+    playerBottom > obstacleTop &&
+    playerTop < obstacleBottom;
 
   if (!collision) {
-
     return;
-
   }
 
-
-  // ==========================
-  // ESPADA
-  // ==========================
-
+  // ESPADA: destruye el obstáculo sin perder vida.
   if (swordActive) {
-
     swordActive = false;
-
     obstacle.destroyed = true;
-
     return;
-
   }
 
-
-  // ==========================
-  // ESCUDO
-  // ==========================
-
+  // ESCUDO: absorbe el golpe.
   if (shieldActive) {
-
     shieldActive = false;
-
     obstacle.destroyed = true;
-
     return;
-
   }
 
+  // GOLPE NORMAL: pierde una vida.
+  lives--;
+  obstacle.destroyed = true;
 
-  // ==========================
-  // VIDA EXTRA
-  // ==========================
-
-  // ==========================
-// PERDER UNA VIDA
-// ==========================
-
-lives--;
-
-obstacle.destroyed = true;
-
-
-// Todavía quedan vidas
-if (lives > 0) {
-
-  return;
+  if (lives <= 0) {
+    lives = 0;
+    endGame();
+  }
 }
 
-
-// Sin vidas = GAME OVER
-endGame();
-
-
-  // ==========================
-  // GAME OVER
-  // ==========================
-
-  endGame();
-}
 
 // ==========================================
 // NIVEL
@@ -2110,6 +1942,33 @@ function restartGame() {
   gameStarted =
     true;
 
+}
+
+
+// ==========================================
+// VIDAS
+// ==========================================
+
+function drawLives() {
+  const heartSize = 42;
+  const spacing = 10;
+
+  if (
+    !powerUpImages.heart.complete ||
+    powerUpImages.heart.naturalWidth === 0
+  ) {
+    return;
+  }
+
+  for (let i = 0; i < lives; i++) {
+    ctx.drawImage(
+      powerUpImages.heart,
+      25 + i * (heartSize + spacing),
+      20,
+      heartSize,
+      heartSize
+    );
+  }
 }
 
 
