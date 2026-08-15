@@ -395,11 +395,11 @@ let nextPowerUp = 850;
 // el juego fuerza uno para evitar rachas de mala suerte.
 let powerUpsWithoutHeart = 0;
 
-// Corazón independiente y garantizado desde nivel 5.
+// Corazón independiente y garantizado desde nivel 3.
 // El primero aparece relativamente pronto para que el jugador
 // compruebe que las vidas extra sí están activas.
 let heartSpawnTimer = 0;
-let nextGuaranteedHeart = 360;
+let nextGuaranteedHeart = 240;
 let guaranteedHeartHasAppeared = false;
 
 // Estados
@@ -571,8 +571,8 @@ function drawDailyRanking() {
   // no cubrir el centro del diseño de la pantalla inicial.
   const boxWidth = 330;
   const boxHeight = 205;
-  const boxX = canvas.width - boxWidth - 28;
-  const boxY = 315;
+  const boxX = canvas.width - boxWidth - 35;
+  const boxY = 390;
 
   ctx.save();
 
@@ -1776,10 +1776,10 @@ function createPowerUp() {
   let powerUp;
 
   // ==========================================
-  // NIVELES 1 - 4
+  // NIVELES 1 - 2
   // SIN CORAZONES
   // ==========================================
-  if (level < 5) {
+  if (level < 3) {
 
     if (random < 0.38) {
       powerUp = {
@@ -1808,8 +1808,8 @@ function createPowerUp() {
   }
 
   // ==========================================
-  // NIVELES 5 - 14
-  // CORAZÓN RARO: 5%
+  // NIVELES 3 - 14
+  // CORAZÓN MÁS FRECUENTE
   // ==========================================
   else if (level < 15) {
 
@@ -1817,7 +1817,7 @@ function createPowerUp() {
     // Si ya salieron 4 power-ups sin corazón,
     // el siguiente será un corazón garantizado.
     if (
-      random < 0.12 ||
+      random < 0.25 ||
       powerUpsWithoutHeart >= 4
     ) {
       powerUp = {
@@ -1864,7 +1864,7 @@ function createPowerUp() {
     // pero un poco menos: 15%.
     // También se garantiza uno tras 4 power-ups sin corazón.
     if (
-      random < 0.10 ||
+      random < 0.18 ||
       powerUpsWithoutHeart >= 4
     ) {
       powerUp = {
@@ -2074,9 +2074,9 @@ function createGuaranteedHeart() {
 
 function updateGuaranteedHeartSpawner() {
 
-  if (level < 5) {
+  if (level < 3) {
     heartSpawnTimer = 0;
-    nextGuaranteedHeart = 360;
+    nextGuaranteedHeart = 240;
     guaranteedHeartHasAppeared = false;
     return;
   }
@@ -2093,12 +2093,12 @@ function updateGuaranteedHeartSpawner() {
     heartSpawnTimer = 0;
     guaranteedHeartHasAppeared = true;
 
-    // Después del primer corazón, los siguientes aparecen
-    // aproximadamente cada 15 a 22 segundos.
+    // Después del primero, los corazones aparecen
+    // aproximadamente cada 8 a 12 segundos.
     nextGuaranteedHeart =
-      900 +
+      480 +
       Math.floor(
-        Math.random() * 420
+        Math.random() * 240
       );
   }
 }
@@ -2125,15 +2125,15 @@ function updatePowerUps() {
     // Power-ups normales con más separación.
     // Los corazones importantes tienen su propio temporizador,
     // así que no dependemos de llenar la pantalla de objetos.
-    if (level < 5) {
+    if (level < 3) {
       nextPowerUp =
         850 +
         Math.floor(Math.random() * 350);
     }
     else if (level < 10) {
       nextPowerUp =
-        800 +
-        Math.floor(Math.random() * 350);
+        700 +
+        Math.floor(Math.random() * 300);
     }
     else if (level < 15) {
       nextPowerUp =
@@ -2727,7 +2727,7 @@ function restartGame() {
   powerUpTimer = 0;
   powerUpsWithoutHeart = 0;
   heartSpawnTimer = 0;
-  nextGuaranteedHeart = 360;
+  nextGuaranteedHeart = 240;
   guaranteedHeartHasAppeared = false;
 
 
@@ -2935,7 +2935,6 @@ function drawStartScreen() {
   ctx.textAlign =
     "left";
 
-  drawDailyRanking();
 
 }
 
@@ -3026,6 +3025,9 @@ function drawGameOver() {
 
   ctx.textAlign =
     "left";
+
+  // Ranking visible únicamente en GAME OVER.
+  drawDailyRanking();
 
 }
 
