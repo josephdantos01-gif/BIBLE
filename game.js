@@ -17,9 +17,9 @@ const groundY = 500;
 // Posición visual donde comienza el PNG del suelo
 const groundDrawY = 350;
 
-const BASE_SPEED = 8;
-const MAX_SPEED = 32;
-const SPEED_PER_LEVEL = 1.10;
+const BASE_SPEED = 10;
+const MAX_SPEED = 34;
+const SPEED_PER_LEVEL = 1.15;
 
 let gameSpeed = BASE_SPEED;
 
@@ -54,6 +54,18 @@ let combo = 1;
 let comboTimer = 0;
 
 const COMBO_TIME = 240;
+
+// ==========================================
+// FRENESÍ
+// Se activa al recoger 5 objetos buenos seguidos sin recibir daño.
+// ==========================================
+let collectibleStreak = 0;
+let frenzyActive = false;
+let frenzyTimer = 0;
+const FRENZY_TRIGGER = 5;
+const FRENZY_DURATION = 420; // aprox. 7 segundos a 60 FPS
+const FRENZY_SPEED_BONUS = 3;
+const FRENZY_SCORE_MULTIPLIER = 2;
 
 
 // ==========================================
@@ -1090,68 +1102,69 @@ function updateObstacles() {
     createObstacle(30);
 
     // ==========================================
-    // PATRONES DE DIFICULTAD
+    // PATRONES DE DIFICULTAD DESDE NIVEL 2
     // ==========================================
 
-    // NIVEL 5+: posibilidad de un segundo obstáculo.
+    // NIVEL 2+: ya puede salir un segundo obstáculo.
+    if (
+      level >= 2 &&
+      Math.random() < Math.min(0.18 + level * 0.015, 0.44)
+    ) {
+      const secondPosition =
+        Math.random() < 0.58 ? "ground" : "air";
+
+      createObstacle(340, secondPosition);
+    }
+
+    // NIVEL 5+: combinaciones tierra + aire más frecuentes.
     if (
       level >= 5 &&
-      Math.random() < Math.min(0.22 + level * 0.012, 0.48)
+      Math.random() < Math.min(0.14 + level * 0.012, 0.38)
     ) {
-
-      const secondPosition =
+      const mixedPosition =
         Math.random() < 0.50 ? "ground" : "air";
 
-      createObstacle(360, secondPosition);
+      createObstacle(520, mixedPosition);
     }
 
-    // NIVEL 10+: aumenta la posibilidad de secuencias dobles.
+    // NIVEL 10+: secuencias más agresivas.
     if (
       level >= 10 &&
-      Math.random() < Math.min(0.16 + level * 0.009, 0.36)
+      Math.random() < Math.min(0.14 + level * 0.009, 0.34)
     ) {
-
-      const secondPosition =
-        Math.random() < 0.45 ? "ground" : "air";
-
-      createObstacle(430, secondPosition);
+      createObstacle(
+        700,
+        Math.random() < 0.45 ? "ground" : "air"
+      );
     }
 
-    // NIVEL 15+: ocasionalmente aparece una secuencia de 3.
-    // Las distancias están separadas para que siga siendo superable.
+    // NIVEL 15+: posibilidad de una secuencia extra.
     if (
       level >= 15 &&
-      Math.random() < Math.min(0.10 + (level - 15) * 0.006, 0.24)
+      Math.random() < Math.min(0.09 + (level - 15) * 0.006, 0.22)
     ) {
-
       createObstacle(
-        400,
-        Math.random() < 0.5 ? "ground" : "air"
-      );
-
-      createObstacle(
-        760,
-        Math.random() < 0.5 ? "ground" : "air"
+        880,
+        Math.random() < 0.45 ? "ground" : "air"
       );
     }
 
     obstacleTimer = 0;
 
-    // ==========================================
-    // FRECUENCIA DE APARICIÓN
-    // Cada nivel disminuye el tiempo entre grupos.
-    // ==========================================
+    // Cada nivel reduce el tiempo entre grupos.
+    // Frenesí lo reduce todavía un poco más.
+    const frenzyReduction = frenzyActive ? 8 : 0;
 
     const minDistance =
       Math.max(
-        26,
-        100 - (level * 5)
+        22,
+        88 - (level * 4) - frenzyReduction
       );
 
     const randomExtra =
       Math.max(
-        16,
-        68 - (level * 2)
+        14,
+        56 - Math.floor(level * 1.6)
       );
 
     nextObstacle =
@@ -1159,7 +1172,6 @@ function updateObstacles() {
       Math.floor(
         Math.random() * randomExtra
       );
-
   }
 
   for (
@@ -1176,23 +1188,20 @@ function updateObstacles() {
 
     checkCollision(obstacle);
 
-    // Si espada o escudo neutralizó el choque,
-    // quitamos este obstáculo y seguimos con el siguiente.
     if (obstacle.destroyed) {
       obstacles.splice(i, 1);
       continue;
     }
 
-    // BONUS POR SUPERAR
     if (
       !obstacle.passed &&
       obstacle.x + obstacle.width < player.x
     ) {
       obstacle.passed = true;
       score += 25;
+      matchStats.obstaclesPassed++;
     }
 
-    // ELIMINAR
     if (
       obstacle.x + obstacle.width < -20
     ) {
@@ -1208,109 +1217,86 @@ function updateObstacles() {
 
 function createCollectible() {
 
-  const random =
-    Math.random();
-
+  const random = Math.random();
 
   let collectible;
 
-
-  if (
-    random < 0.60
-  ) {
-
+  if (random < 0.60) {
     collectible = {
-
       type: "star",
-
       value: 50,
-
       color: "#FFD700",
-
       size: 55
-
     };
-
   }
-
-  else if (
-    random < 0.90
-  ) {
-
+  else if (random < 0.90) {
     collectible = {
-
       type: "gem",
-
       value: 100,
-
       color: "#22D3EE",
-
       size: 60
-
     };
-
   }
-
   else {
-
     collectible = {
-
       type: "crown",
-
       value: 250,
-
       color: "#F59E0B",
-
       size: 65
-
     };
-
   }
-
 
   const heights = [
-
     groundY - 100,
     groundY - 160,
     groundY - 220
-
   ];
 
-
-  const randomHeight =
+  let x = canvas.width + 50;
+  let y =
     heights[
       Math.floor(
-        Math.random() *
-        heights.length
+        Math.random() * heights.length
       )
     ];
 
+  // ==========================================
+  // OBJETOS DE RIESGO
+  // Desde nivel 2, algunos aparecen sobre/cerca
+  // de un obstáculo terrestre y valen más.
+  // ==========================================
+  let risky = false;
+
+  if (level >= 2 && Math.random() < 0.35) {
+    const groundObstacles = obstacles.filter(
+      obstacle =>
+        obstacle.type !== "raven" &&
+        obstacle.type !== "devil" &&
+        obstacle.x > canvas.width * 0.55
+    );
+
+    if (groundObstacles.length > 0) {
+      const obstacle =
+        groundObstacles[
+          Math.floor(Math.random() * groundObstacles.length)
+        ];
+
+      x = obstacle.x + (obstacle.width - collectible.size) / 2;
+      y = Math.max(95, obstacle.y - collectible.size - 25);
+      risky = true;
+    }
+  }
 
   collectibles.push({
-
-    x:
-      canvas.width + 50,
-
-    y:
-      randomHeight,
-
-    width:
-      collectible.size,
-
-    height:
-      collectible.size,
-
-    type:
-      collectible.type,
-
-    value:
-      collectible.value,
-
-    color:
-      collectible.color
-
+    x: x,
+    y: y,
+    width: collectible.size,
+    height: collectible.size,
+    type: collectible.type,
+    value: risky ? Math.round(collectible.value * 1.5) : collectible.value,
+    color: collectible.color,
+    risky: risky
   });
-
 }
 
 
@@ -1365,12 +1351,15 @@ function updateCollectibles() {
       0;
 
 
-    nextCollectible =
-      150 +
-      Math.floor(
-        Math.random() *
-        130
-      );
+    if (frenzyActive) {
+      nextCollectible =
+        65 +
+        Math.floor(Math.random() * 55);
+    } else {
+      nextCollectible =
+        130 +
+        Math.floor(Math.random() * 110);
+    }
 
   }
 
@@ -1478,9 +1467,13 @@ function collectItem(
 
   playSound(collectSound);
 
+  const frenzyMultiplier =
+    frenzyActive ? FRENZY_SCORE_MULTIPLIER : 1;
+
   score +=
     item.value *
-    combo;
+    combo *
+    frenzyMultiplier;
 
   matchStats.collectiblesTotal++;
 
@@ -1496,7 +1489,20 @@ function collectItem(
 
   matchStats.maxCombo = Math.max(matchStats.maxCombo, combo);
   comboTimer = COMBO_TIME;
+
+  // Cada objeto bueno aumenta la racha.
+  collectibleStreak++;
+
+  // 5 seguidos = FRENESÍ.
+  if (
+    collectibleStreak >= FRENZY_TRIGGER &&
+    !frenzyActive
+  ) {
+    frenzyActive = true;
+    frenzyTimer = FRENZY_DURATION;
+  }
 }
+
 
 // ==========================================
 // POWER UPS
@@ -1914,6 +1920,88 @@ function drawCombo() {
 }
 
 
+
+function drawCollectibleCounter() {
+  ctx.save();
+
+  const boxX = 22;
+  const boxY = 124;
+  const boxWidth = 170;
+  const boxHeight = 46;
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+  ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+
+  const iconSize = 32;
+  const iconX = boxX + 10;
+  const iconY = boxY + 7;
+
+  if (
+    collectibleImages.star.complete &&
+    collectibleImages.star.naturalWidth > 0
+  ) {
+    ctx.drawImage(
+      collectibleImages.star,
+      iconX,
+      iconY,
+      iconSize,
+      iconSize
+    );
+  } else {
+    ctx.fillStyle = "#FFD700";
+    ctx.beginPath();
+    ctx.arc(iconX + 16, iconY + 16, 12, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.font = "bold 24px monospace";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 4;
+
+  const totalText = "x " + matchStats.collectiblesTotal;
+  ctx.strokeText(totalText, boxX + 54, boxY + boxHeight / 2);
+  ctx.fillText(totalText, boxX + 54, boxY + boxHeight / 2);
+
+  ctx.restore();
+}
+
+function updateFrenzy() {
+  if (!frenzyActive) return;
+
+  frenzyTimer--;
+
+  if (frenzyTimer <= 0) {
+    frenzyActive = false;
+    frenzyTimer = 0;
+    collectibleStreak = 0;
+  }
+}
+
+function drawFrenzy() {
+  if (!frenzyActive) return;
+
+  ctx.save();
+
+  const seconds = Math.max(1, Math.ceil(frenzyTimer / 60));
+  const text = "🔥 FRENESÍ x2  " + seconds + "s";
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "bold 28px monospace";
+  ctx.fillStyle = "#FFD700";
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 5;
+
+  ctx.strokeText(text, canvas.width / 2, 112);
+  ctx.fillText(text, canvas.width / 2, 112);
+
+  ctx.restore();
+}
+
+
 // ==========================================
 // COLISIÓN CON OBSTÁCULOS
 // ==========================================
@@ -2038,7 +2126,8 @@ function updateDifficulty() {
   // Más velocidad en CADA nivel.
   gameSpeed =
     BASE_SPEED +
-    ((level - 1) * SPEED_PER_LEVEL);
+    ((level - 1) * SPEED_PER_LEVEL) +
+    (frenzyActive ? FRENZY_SPEED_BONUS : 0);
 
   if (gameSpeed > MAX_SPEED) {
     gameSpeed = MAX_SPEED;
@@ -2227,6 +2316,10 @@ function restartGame() {
   combo = 1;
 
   comboTimer = 0;
+
+  collectibleStreak = 0;
+  frenzyActive = false;
+  frenzyTimer = 0;
 
 
   levelMessageTimer = 0;
@@ -2864,6 +2957,7 @@ if (playerHit) {
     updatePowerUps();
 
     updateCombo();
+    updateFrenzy();
     updateBibleMessage();
 
 
@@ -2892,8 +2986,10 @@ if (playerHit) {
 
     drawUI();
     drawLives();
-    drawBibleMessage();
     drawCombo();
+    drawCollectibleCounter();
+    drawFrenzy();
+    drawBibleMessage();
 
     drawLevelMessage();
 
