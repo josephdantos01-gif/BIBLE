@@ -18,8 +18,8 @@ const groundY = 500;
 const groundDrawY = 350;
 
 const BASE_SPEED = 8;
-const MAX_SPEED = 24;
-const SPEED_PER_LEVEL = 0.75;
+const MAX_SPEED = 32;
+const SPEED_PER_LEVEL = 1.10;
 
 let gameSpeed = BASE_SPEED;
 
@@ -615,7 +615,7 @@ function updatePlayer() {
 // CREAR OBSTÁCULO
 // ==========================================
 
-function createObstacle() {
+function createObstacle(xOffset = 30, forcedPosition = null) {
 
   let types = [
 
@@ -653,7 +653,7 @@ function createObstacle() {
 
   ];
 
-  // NIVEL 2: CUERVO
+  // NIVEL 2+: CUERVO
   if (level >= 2) {
     types.push({
       type: "raven",
@@ -663,7 +663,7 @@ function createObstacle() {
     });
   }
 
-  // NIVEL 3: DIABLO
+  // NIVEL 3+: DIABLO
   if (level >= 3) {
     types.push({
       type: "devil",
@@ -673,11 +673,38 @@ function createObstacle() {
     });
   }
 
+  // En niveles altos damos más peso a los obstáculos aéreos.
+  if (level >= 10) {
+    types.push(
+      { type: "raven", width: 110, height: 80, position: "air" },
+      { type: "devil", width: 100, height: 100, position: "air" }
+    );
+  }
+
+  if (level >= 15) {
+    types.push(
+      { type: "raven", width: 110, height: 80, position: "air" },
+      { type: "devil", width: 100, height: 100, position: "air" }
+    );
+  }
+
+  let availableTypes = types;
+
+  // Permite crear patrones mezclando tierra y aire.
+  if (forcedPosition) {
+    const filtered = types.filter(
+      item => item.position === forcedPosition
+    );
+
+    if (filtered.length > 0) {
+      availableTypes = filtered;
+    }
+  }
+
   const obstacleType =
-    types[
+    availableTypes[
       Math.floor(
-        Math.random() *
-        types.length
+        Math.random() * availableTypes.length
       )
     ];
 
@@ -685,31 +712,33 @@ function createObstacle() {
 
   // TERRESTRES
   if (obstacleType.position === "ground") {
-    y =
-      groundY -
-      obstacleType.height;
+    y = groundY - obstacleType.height;
   }
 
-  // AÉREOS: PUEDEN SALIR EN DIFERENTES ALTURAS
+  // AÉREOS CON ALTURAS VARIABLES
   else {
     const airHeights = [
-      groundY - 170, // bajo: obliga a saltar con cuidado
-      groundY - 220, // medio
-      groundY - 270, // alto
-      groundY - 320  // muy alto
+      groundY - 180, // bajo
+      groundY - 230, // medio-bajo
+      groundY - 280, // medio-alto
+      groundY - 335  // alto
     ];
+
+    // Desde nivel 12 se agrega una quinta altura.
+    if (level >= 12) {
+      airHeights.push(groundY - 380);
+    }
 
     y =
       airHeights[
         Math.floor(
-          Math.random() *
-          airHeights.length
+          Math.random() * airHeights.length
         )
       ];
   }
 
   obstacles.push({
-    x: canvas.width + 30,
+    x: canvas.width + xOffset,
     y: y,
     width: obstacleType.width,
     height: obstacleType.height,
@@ -777,108 +806,121 @@ function updateObstacles() {
 
   obstacleTimer++;
 
+  if (obstacleTimer >= nextObstacle) {
 
-  if (
-    obstacleTimer >=
-    nextObstacle
-  ) {
+    // Obstáculo principal
+    createObstacle(30);
 
-    createObstacle();
+    // ==========================================
+    // PATRONES DE DIFICULTAD
+    // ==========================================
+
+    // NIVEL 5+: posibilidad de un segundo obstáculo.
+    if (
+      level >= 5 &&
+      Math.random() < Math.min(0.22 + level * 0.012, 0.48)
+    ) {
+
+      const secondPosition =
+        Math.random() < 0.50 ? "ground" : "air";
+
+      createObstacle(360, secondPosition);
+    }
+
+    // NIVEL 10+: aumenta la posibilidad de secuencias dobles.
+    if (
+      level >= 10 &&
+      Math.random() < Math.min(0.16 + level * 0.009, 0.36)
+    ) {
+
+      const secondPosition =
+        Math.random() < 0.45 ? "ground" : "air";
+
+      createObstacle(430, secondPosition);
+    }
+
+    // NIVEL 15+: ocasionalmente aparece una secuencia de 3.
+    // Las distancias están separadas para que siga siendo superable.
+    if (
+      level >= 15 &&
+      Math.random() < Math.min(0.10 + (level - 15) * 0.006, 0.24)
+    ) {
+
+      createObstacle(
+        400,
+        Math.random() < 0.5 ? "ground" : "air"
+      );
+
+      createObstacle(
+        760,
+        Math.random() < 0.5 ? "ground" : "air"
+      );
+    }
 
     obstacleTimer = 0;
 
+    // ==========================================
+    // FRECUENCIA DE APARICIÓN
+    // Cada nivel disminuye el tiempo entre grupos.
+    // ==========================================
 
-    // Cada nivel reduce el tiempo entre obstáculos.
-    // El límite evita que aparezcan de forma imposible.
     const minDistance =
       Math.max(
-        38,
-        105 - (level * 4)
+        26,
+        100 - (level * 5)
       );
 
     const randomExtra =
       Math.max(
-        25,
-        75 - (level * 2)
+        16,
+        68 - (level * 2)
       );
 
     nextObstacle =
       minDistance +
       Math.floor(
-        Math.random() *
-        randomExtra
+        Math.random() * randomExtra
       );
 
   }
 
-
   for (
-    let i =
-      obstacles.length - 1;
-
+    let i = obstacles.length - 1;
     i >= 0;
-
     i--
   ) {
 
-    const obstacle =
-      obstacles[i];
+    const obstacle = obstacles[i];
 
+    obstacle.x -= gameSpeed;
 
-    obstacle.x -=
-      gameSpeed;
+    drawObstacle(obstacle);
 
+    checkCollision(obstacle);
 
-    drawObstacle(
-      obstacle
-    );
-
-
-    checkCollision(
-      obstacle
-    );
-
-    // Si espada, escudo o corazón neutralizó el choque,
+    // Si espada o escudo neutralizó el choque,
     // quitamos este obstáculo y seguimos con el siguiente.
     if (obstacle.destroyed) {
       obstacles.splice(i, 1);
       continue;
     }
-    // BONUS POR SUPERAR
 
+    // BONUS POR SUPERAR
     if (
       !obstacle.passed &&
-
-      obstacle.x +
-      obstacle.width <
-      player.x
+      obstacle.x + obstacle.width < player.x
     ) {
-
-      obstacle.passed =
-        true;
-
+      obstacle.passed = true;
       score += 25;
-
     }
-
 
     // ELIMINAR
-
     if (
-      obstacle.x +
-      obstacle.width <
-      -20
+      obstacle.x + obstacle.width < -20
     ) {
-
-      obstacles.splice(
-        i,
-        1
-      );
-
+      obstacles.splice(i, 1);
     }
-
   }
-
 }
 
 
@@ -1190,11 +1232,11 @@ function createPowerUp() {
 
   // ==========================================
   // NIVELES 1 - 9
-  // NO PUEDEN SALIR CORAZONES
+  // SIN CORAZONES
   // ==========================================
   if (level < 10) {
 
-    if (random < 0.45) {
+    if (random < 0.38) {
       powerUp = {
         type: "shield",
         width: 65,
@@ -1202,7 +1244,7 @@ function createPowerUp() {
       };
     }
 
-    else if (random < 0.75) {
+    else if (random < 0.68) {
       powerUp = {
         type: "sword",
         width: 55,
@@ -1221,12 +1263,12 @@ function createPowerUp() {
   }
 
   // ==========================================
-  // NIVEL 10 EN ADELANTE
-  // CORAZÓN MUY RARO: 8%
+  // NIVEL 10+
+  // CORAZÓN MUY RARO: 5%
   // ==========================================
-  else {
+  else if (level < 15) {
 
-    if (random < 0.08) {
+    if (random < 0.05) {
       powerUp = {
         type: "heart",
         width: 60,
@@ -1234,7 +1276,7 @@ function createPowerUp() {
       };
     }
 
-    else if (random < 0.45) {
+    else if (random < 0.35) {
       powerUp = {
         type: "shield",
         width: 65,
@@ -1242,7 +1284,48 @@ function createPowerUp() {
       };
     }
 
-    else if (random < 0.75) {
+    else if (random < 0.62) {
+      powerUp = {
+        type: "sword",
+        width: 55,
+        height: 85
+      };
+    }
+
+    else {
+      powerUp = {
+        type: "scroll",
+        width: 75,
+        height: 60
+      };
+    }
+
+  }
+
+  // ==========================================
+  // NIVEL 15+
+  // Mantiene corazón al 5%, pero reduce
+  // escudo y espada para aumentar dificultad.
+  // ==========================================
+  else {
+
+    if (random < 0.05) {
+      powerUp = {
+        type: "heart",
+        width: 60,
+        height: 60
+      };
+    }
+
+    else if (random < 0.27) {
+      powerUp = {
+        type: "shield",
+        width: 65,
+        height: 70
+      };
+    }
+
+    else if (random < 0.47) {
       powerUp = {
         type: "sword",
         width: 55,
@@ -1269,8 +1352,7 @@ function createPowerUp() {
   const y =
     heights[
       Math.floor(
-        Math.random() *
-        heights.length
+        Math.random() * heights.length
       )
     ];
 
@@ -1400,15 +1482,22 @@ function updatePowerUps() {
     powerUpTimer = 0;
 
 
-    // próximo entre aprox.
-    // 15 y 25 segundos
-
-    nextPowerUp =
-      900 +
-      Math.floor(
-        Math.random() *
-        600
-      );
+    // En niveles altos los power-ups aparecen menos seguido.
+    if (level < 10) {
+      nextPowerUp =
+        1050 +
+        Math.floor(Math.random() * 600);
+    }
+    else if (level < 15) {
+      nextPowerUp =
+        1200 +
+        Math.floor(Math.random() * 700);
+    }
+    else {
+      nextPowerUp =
+        1400 +
+        Math.floor(Math.random() * 800);
+    }
 
   }
 
@@ -1658,7 +1747,7 @@ function updateLevel() {
 
 function updateDifficulty() {
 
-  // Aumenta la velocidad en CADA nivel.
+  // Más velocidad en CADA nivel.
   gameSpeed =
     BASE_SPEED +
     ((level - 1) * SPEED_PER_LEVEL);
