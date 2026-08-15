@@ -1529,10 +1529,10 @@ function createPowerUp() {
   let powerUp;
 
   // ==========================================
-  // NIVELES 1 - 7
+  // NIVELES 1 - 4
   // SIN CORAZONES
   // ==========================================
-  if (level < 8) {
+  if (level < 5) {
 
     if (random < 0.38) {
       powerUp = {
@@ -1561,7 +1561,7 @@ function createPowerUp() {
   }
 
   // ==========================================
-  // NIVELES 8 - 14
+  // NIVELES 5 - 14
   // CORAZÓN RARO: 5%
   // ==========================================
   else if (level < 15) {
@@ -2190,11 +2190,29 @@ function updateLevel() {
 
 function updateDifficulty() {
 
-  // Más velocidad en CADA nivel.
+  // NIVELES 1-6:
+  // incremento normal de +0.75 por nivel.
+  const normalLevels =
+    Math.min(
+      Math.max(level - 1, 0),
+      5
+    );
+
   gameSpeed =
     BASE_SPEED +
-    ((level - 1) * SPEED_PER_LEVEL) +
-    (frenzyActive ? FRENZY_SPEED_BONUS : 0);
+    (normalLevels * 0.75);
+
+  // DESDE NIVEL 7:
+  // sigue acelerando, pero solo +0.35 por nivel.
+  if (level >= 7) {
+    gameSpeed +=
+      (level - 6) * 0.35;
+  }
+
+  // Frenesí continúa dando su aumento temporal.
+  if (frenzyActive) {
+    gameSpeed += FRENZY_SPEED_BONUS;
+  }
 
   if (gameSpeed > MAX_SPEED) {
     gameSpeed = MAX_SPEED;
