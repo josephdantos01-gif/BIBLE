@@ -61,12 +61,13 @@ const COMBO_TIME = 240;
 // ==========================================
 
 const startScreenImage = new Image();
+startScreenImage.decoding = "async";
+startScreenImage.fetchPriority = "high";
 startScreenImage.src =
   "assets/ui/start-screen.png";
 
 const gameOverImage = new Image();
-gameOverImage.src =
-  "assets/ui/game-over.png";
+gameOverImage.decoding = "async";
 
 
 // ==========================================
@@ -80,6 +81,11 @@ const playerImages = {
   jump: new Image(),
   hit: new Image()
 };
+
+Object.values(playerImages).forEach((image) => {
+  image.decoding = "async";
+  image.fetchPriority = "high";
+});
 
 playerImages.idle.src =
   "assets/player/idle.png";
@@ -102,22 +108,32 @@ playerImages.hit.src =
 // ==========================================
 
 const skyImage = new Image();
+skyImage.decoding = "async";
+skyImage.fetchPriority = "high";
 skyImage.src =
   "assets/background/sky.png";
 
 const mountainsImage = new Image();
+mountainsImage.decoding = "async";
+mountainsImage.fetchPriority = "high";
 mountainsImage.src =
   "assets/background/mountains.png";
 
 const forestImage = new Image();
+forestImage.decoding = "async";
+forestImage.fetchPriority = "high";
 forestImage.src =
   "assets/background/tree.png";
 
 const treeImage = new Image();
+treeImage.decoding = "async";
+treeImage.fetchPriority = "high";
 treeImage.src =
   "assets/background/tree2.png";
 
 const groundImage = new Image();
+groundImage.decoding = "async";
+groundImage.fetchPriority = "high";
 groundImage.src =
   "assets/background/ground.png";
 
@@ -143,6 +159,10 @@ const obstacleImages = {
   raven: new Image(),
   devil: new Image()
 };
+
+Object.values(obstacleImages).forEach((image) => {
+  image.decoding = "async";
+});
 
 obstacleImages.rock.src =
   "assets/obstacles/rock.png";
@@ -176,14 +196,11 @@ const collectibleImages = {
   crown: new Image()
 };
 
-collectibleImages.star.src =
-  "assets/collectibles/star.png";
+// star se carga en segundo plano para acelerar el inicio.
 
-collectibleImages.gem.src =
-  "assets/collectibles/gem.png";
+// gem se carga en segundo plano para acelerar el inicio.
 
-collectibleImages.crown.src =
-  "assets/collectibles/crown.png";
+// crown se carga en segundo plano para acelerar el inicio.
 
 
 // ==========================================
@@ -197,17 +214,51 @@ const powerUpImages = {
   scroll: new Image()
 };
 
+powerUpImages.heart.decoding = "async";
+powerUpImages.heart.fetchPriority = "high";
 powerUpImages.heart.src =
   "assets/powerups/heart.png";
 
-powerUpImages.shield.src =
-  "assets/powerups/shield.png";
+// shield se carga en segundo plano para acelerar el inicio.
 
-powerUpImages.sword.src =
-  "assets/powerups/sword.png";
+// sword se carga en segundo plano para acelerar el inicio.
 
-powerUpImages.scroll.src =
-  "assets/powerups/scroll.png";
+// scroll se carga en segundo plano para acelerar el inicio.
+// ==========================================
+// CARGA OPTIMIZADA DE ASSETS SECUNDARIOS
+// ==========================================
+
+let secondaryAssetsStarted = false;
+
+function loadSecondaryAssets() {
+  if (secondaryAssetsStarted) return;
+  secondaryAssetsStarted = true;
+
+  const secondaryAssets = [
+    [gameOverImage, "assets/ui/game-over.png"],
+    [collectibleImages.star, "assets/collectibles/star.png"],
+    [collectibleImages.gem, "assets/collectibles/gem.png"],
+    [collectibleImages.crown, "assets/collectibles/crown.png"],
+    [powerUpImages.shield, "assets/powerups/shield.png"],
+    [powerUpImages.sword, "assets/powerups/sword.png"],
+    [powerUpImages.scroll, "assets/powerups/scroll.png"]
+  ];
+
+  secondaryAssets.forEach(([image, src]) => {
+    image.decoding = "async";
+    image.src = src;
+  });
+}
+
+// Dejamos que primero entren pantalla inicial, escenario, personaje y obstáculos.
+window.addEventListener("load", () => {
+  setTimeout(loadSecondaryAssets, 250);
+}, { once: true });
+
+// Respaldo por si el evento load ya ocurrió o algún navegador lo retrasa.
+setTimeout(loadSecondaryAssets, 1200);
+
+
 // ==========================================
 // ANIMACIÓN DEL PERSONAJE
 // ==========================================
@@ -276,6 +327,174 @@ let swordActive = false;
 // Temporizadores de coleccionables
 let collectibleTimer = 0;
 let nextCollectible = 180;
+
+
+// ==========================================
+// TEXTOS BÍBLICOS EN PANTALLA
+// Frases breves/paráfrasis con referencia.
+// ==========================================
+
+const biblicalMessages = [
+  { text: "Confía en Dios con todo tu corazón", ref: "Proverbios 3:5" },
+  { text: "Sé fuerte y valiente; Dios va contigo", ref: "Josué 1:9" },
+  { text: "La Palabra guía cada paso", ref: "Salmo 119:105" },
+  { text: "Dios renueva las fuerzas del que espera en Él", ref: "Isaías 40:31" },
+  { text: "Permanece firme y no te rindas", ref: "1 Corintios 15:58" },
+  { text: "Todo lo puedo en Cristo que me fortalece", ref: "Filipenses 4:13" },
+  { text: "Busca primero el reino de Dios", ref: "Mateo 6:33" },
+  { text: "La fe vence al temor", ref: "2 Timoteo 1:7" },
+  { text: "Dios es refugio y fortaleza", ref: "Salmo 46:1" },
+  { text: "Corre con paciencia la carrera", ref: "Hebreos 12:1" },
+  { text: "Guarda la Palabra en tu corazón", ref: "Salmo 119:11" },
+  { text: "No te canses de hacer el bien", ref: "Gálatas 6:9" },
+  { text: "Camina por fe", ref: "2 Corintios 5:7" },
+  { text: "Dios dirige tus pasos", ref: "Proverbios 16:9" },
+  { text: "La verdad te hace libre", ref: "Juan 8:32" }
+];
+
+let currentBibleMessageIndex = Math.floor(Math.random() * biblicalMessages.length);
+let bibleMessageTimer = 0;
+const BIBLE_MESSAGE_DURATION = 480; // aprox. 8 segundos a 60 FPS
+
+function updateBibleMessage() {
+  bibleMessageTimer++;
+
+  if (bibleMessageTimer >= BIBLE_MESSAGE_DURATION) {
+    let nextIndex = currentBibleMessageIndex;
+
+    while (nextIndex === currentBibleMessageIndex && biblicalMessages.length > 1) {
+      nextIndex = Math.floor(Math.random() * biblicalMessages.length);
+    }
+
+    currentBibleMessageIndex = nextIndex;
+    bibleMessageTimer = 0;
+  }
+}
+
+function drawBibleMessage() {
+  const message = biblicalMessages[currentBibleMessageIndex];
+  if (!message) return;
+
+  const boxWidth = 720;
+  const boxHeight = 58;
+  const boxX = (canvas.width - boxWidth) / 2;
+  const boxY = 18;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.52)";
+  ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 3;
+  ctx.font = "bold 18px monospace";
+
+  const line = message.text + " — " + message.ref;
+  ctx.strokeText(line, canvas.width / 2, boxY + 36);
+  ctx.fillText(line, canvas.width / 2, boxY + 36);
+  ctx.restore();
+}
+
+
+// ==========================================
+// ESTADÍSTICAS DE PARTIDA
+// ==========================================
+
+// Para recibir todos los registros de todos los dispositivos, pega aquí
+// la URL de tu Web App de Google Apps Script. Si queda vacío, los datos
+// se guardan únicamente en el dispositivo del jugador.
+const STATS_ENDPOINT =
+  "https://script.google.com/macros/s/AKfycbypUZP7UgahGdYk0ZDBhesSCIoQMjAm5sN60vZosMsEOg6AtfUis7oiW3L6Y33Kzgpf/exec";
+
+let gameStartTime = 0;
+let resultSavedForCurrentGame = false;
+
+function createEmptyMatchStats() {
+  return {
+    collectiblesTotal: 0,
+    stars: 0,
+    gems: 0,
+    crowns: 0,
+    powerUpsTotal: 0,
+    hearts: 0,
+    shields: 0,
+    swords: 0,
+    scrolls: 0,
+    obstaclesPassed: 0,
+    hits: 0,
+    maxCombo: 1,
+    maxSpeed: BASE_SPEED
+  };
+}
+
+let matchStats = createEmptyMatchStats();
+
+function beginMatchTracking() {
+  gameStartTime = Date.now();
+  resultSavedForCurrentGame = false;
+  matchStats = createEmptyMatchStats();
+}
+
+function saveMatchLocally(result) {
+  try {
+    const key = "levelUpMatchRecords";
+    const records = JSON.parse(localStorage.getItem(key) || "[]");
+    records.push(result);
+
+    // Evita llenar indefinidamente el almacenamiento local.
+    if (records.length > 500) {
+      records.splice(0, records.length - 500);
+    }
+
+    localStorage.setItem(key, JSON.stringify(records));
+  } catch (error) {
+    console.warn("No se pudo guardar el registro local:", error);
+  }
+}
+
+function sendMatchToEndpoint(result) {
+  if (!STATS_ENDPOINT) return;
+
+  fetch(STATS_ENDPOINT, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify(result),
+    keepalive: true
+  }).catch((error) => {
+    console.warn("No se pudo enviar la estadística:", error);
+  });
+}
+
+function askAndSaveMatchResult(baseResult) {
+  if (resultSavedForCurrentGame) return;
+  resultSavedForCurrentGame = true;
+
+  let playerName = window.prompt("Escribe tu nombre para guardar tu partida:", "");
+  if (playerName === null) playerName = "";
+  playerName = playerName.trim().slice(0, 30);
+  if (!playerName) playerName = "Anónimo";
+
+  let district = window.prompt("Escribe tu número de distrito:", "");
+  if (district === null) district = "";
+  district = district.trim().slice(0, 10);
+  if (!district) district = "Sin distrito";
+
+  const result = {
+    ...baseResult,
+    playerName,
+    district
+  };
+
+  saveMatchLocally(result);
+  sendMatchToEndpoint(result);
+
+  console.table(result);
+}
+
 
 
 // ==========================================
@@ -1202,22 +1421,20 @@ function collectItem(
     item.value *
     combo;
 
+  matchStats.collectiblesTotal++;
+
+  if (item.type === "star") matchStats.stars++;
+  else if (item.type === "gem") matchStats.gems++;
+  else if (item.type === "crown") matchStats.crowns++;
 
   combo++;
 
-
-  if (
-    combo > 5
-  ) {
-
+  if (combo > 5) {
     combo = 5;
-
   }
 
-
-  comboTimer =
-    COMBO_TIME;
-
+  matchStats.maxCombo = Math.max(matchStats.maxCombo, combo);
+  comboTimer = COMBO_TIME;
 }
 
 // ==========================================
@@ -1419,6 +1636,13 @@ function checkPowerUpCollision(powerUp) {
 //ACTIVAR
 
 function activatePowerUp(powerUp) {
+
+  matchStats.powerUpsTotal++;
+
+  if (powerUp.type === "heart") matchStats.hearts++;
+  else if (powerUp.type === "shield") matchStats.shields++;
+  else if (powerUp.type === "sword") matchStats.swords++;
+  else if (powerUp.type === "scroll") matchStats.scrolls++;
 
   // ❤️ VIDA EXTRA
 
@@ -1698,6 +1922,7 @@ function checkCollision(obstacle) {
   }
 
   // GOLPE NORMAL
+  matchStats.hits++;
   lives--;
   obstacle.destroyed = true;
 
@@ -1843,37 +2068,52 @@ function drawLevelMessage() {
 
 function endGame() {
 
+  if (gameOver) return;
+
   gameOver = true;
-
-
   jumpHeld = false;
 
+  const finalScore = Math.floor(score);
+  const previousHighScore = highScore;
 
-  const finalScore =
-    Math.floor(
-      score
-    );
-
-
-  if (
-    finalScore >
-    highScore
-  ) {
-
-    highScore =
-      finalScore;
-
-
-    localStorage.setItem(
-
-      "levelUpHighScore",
-
-      highScore
-
-    );
-
+  if (finalScore > highScore) {
+    highScore = finalScore;
+    localStorage.setItem("levelUpHighScore", highScore);
   }
 
+  const endTime = Date.now();
+  const durationSeconds = gameStartTime > 0
+    ? Math.max(0, Math.round((endTime - gameStartTime) / 1000))
+    : 0;
+
+  const result = {
+    id: "match_" + endTime + "_" + Math.random().toString(36).slice(2, 8),
+    playedAt: new Date(endTime).toISOString(),
+    score: finalScore,
+    recordBeforeGame: previousHighScore,
+    recordAfterGame: highScore,
+    isNewRecord: finalScore > previousHighScore,
+    levelReached: level,
+    durationSeconds,
+    livesRemaining: Math.max(0, lives),
+    obstaclesPassed: matchStats.obstaclesPassed,
+    hits: matchStats.hits,
+    collectiblesTotal: matchStats.collectiblesTotal,
+    stars: matchStats.stars,
+    gems: matchStats.gems,
+    crowns: matchStats.crowns,
+    powerUpsTotal: matchStats.powerUpsTotal,
+    hearts: matchStats.hearts,
+    shields: matchStats.shields,
+    swords: matchStats.swords,
+    scrolls: matchStats.scrolls,
+    maxCombo: matchStats.maxCombo,
+    maxSpeed: Number(matchStats.maxSpeed.toFixed(2))
+  };
+
+  // Permitimos que se dibuje primero la pantalla GAME OVER y luego pedimos
+  // únicamente nombre y distrito.
+  setTimeout(() => askAndSaveMatchResult(result), 250);
 }
 
 
@@ -1960,6 +2200,10 @@ function restartGame() {
 
   gameStarted =
     true;
+
+  bibleMessageTimer = 0;
+  currentBibleMessageIndex = Math.floor(Math.random() * biblicalMessages.length);
+  beginMatchTracking();
 
 }
 
@@ -2531,6 +2775,10 @@ if (playerHit) {
 
   ) {
 
+    if (gameStartTime === 0) {
+      beginMatchTracking();
+    }
+
     updatePlayer();
 
     updateObstacles();
@@ -2540,6 +2788,7 @@ if (playerHit) {
     updatePowerUps();
 
     updateCombo();
+    updateBibleMessage();
 
 
     score +=
@@ -2566,7 +2815,8 @@ if (playerHit) {
   ) {
 
     drawUI();
-    drawLives();  
+    drawLives();
+    drawBibleMessage();
     drawCombo();
 
     drawLevelMessage();
