@@ -567,16 +567,23 @@ function loadDailyRanking() {
 
 function drawDailyRanking() {
 
-  // Panel compacto colocado en el lateral derecho para
-  // no cubrir el centro del diseño de la pantalla inicial.
-  const boxWidth = 330;
-  const boxHeight = 205;
-  const boxX = canvas.width - boxWidth - 35;
-  const boxY = 390;
+  // Panel más ancho para que nombre y distrito
+  // no se monten entre sí.
+  const boxWidth = 440;
+  const boxHeight = 210;
+
+  const boxX =
+    canvas.width -
+    boxWidth -
+    25;
+
+  const boxY = 385;
 
   ctx.save();
 
-  ctx.fillStyle = "rgba(0, 0, 0, 0.38)";
+  ctx.fillStyle =
+    "rgba(0, 0, 0, 0.42)";
+
   ctx.fillRect(
     boxX,
     boxY,
@@ -584,8 +591,11 @@ function drawDailyRanking() {
     boxHeight
   );
 
-  ctx.strokeStyle = "rgba(255, 215, 0, 0.75)";
+  ctx.strokeStyle =
+    "rgba(255, 215, 0, 0.85)";
+
   ctx.lineWidth = 2;
+
   ctx.strokeRect(
     boxX,
     boxY,
@@ -596,7 +606,9 @@ function drawDailyRanking() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  ctx.font = "bold 21px monospace";
+  ctx.font =
+    "bold 21px monospace";
+
   ctx.fillStyle = "#FFD700";
   ctx.strokeStyle = "#000000";
   ctx.lineWidth = 4;
@@ -613,15 +625,40 @@ function drawDailyRanking() {
     boxY + 25
   );
 
+  // Encabezados
+  ctx.font =
+    "bold 14px monospace";
+
+  ctx.fillStyle = "#7FE7FF";
+
+  ctx.textAlign = "left";
+
+  ctx.fillText(
+    "NOMBRE",
+    boxX + 55,
+    boxY + 53
+  );
+
+  ctx.textAlign = "right";
+
+  ctx.fillText(
+    "DISTRITO",
+    boxX + boxWidth - 22,
+    boxY + 53
+  );
+
   if (!rankingLoaded) {
 
-    ctx.font = "bold 16px monospace";
+    ctx.textAlign = "center";
+    ctx.font =
+      "bold 16px monospace";
+
     ctx.fillStyle = "#FFFFFF";
 
     ctx.fillText(
       "Cargando ranking...",
       boxX + boxWidth / 2,
-      boxY + 105
+      boxY + 120
     );
 
     ctx.restore();
@@ -633,7 +670,10 @@ function drawDailyRanking() {
     dailyRanking.length === 0
   ) {
 
-    ctx.font = "bold 15px monospace";
+    ctx.textAlign = "center";
+    ctx.font =
+      "bold 15px monospace";
+
     ctx.fillStyle = "#FFFFFF";
 
     ctx.fillText(
@@ -641,78 +681,76 @@ function drawDailyRanking() {
         ? "Ranking no disponible"
         : "Sé el primero del día",
       boxX + boxWidth / 2,
-      boxY + 105
+      boxY + 120
     );
 
     ctx.restore();
     return;
   }
 
-  ctx.textAlign = "left";
-  ctx.font = "bold 15px monospace";
+  ctx.font =
+    "bold 15px monospace";
 
-  dailyRanking.forEach((entry, index) => {
+  dailyRanking.forEach(
+    (entry, index) => {
 
-    const y =
-      boxY +
-      57 +
-      (index * 28);
+      const y =
+        boxY +
+        82 +
+        (index * 25);
 
-    const position =
-      (index + 1) + ".";
+      const position =
+        (index + 1) + ".";
 
-    const rawName =
-      String(entry.name || "Anónimo");
+      const rawName =
+        String(
+          entry.name ||
+          "Anónimo"
+        );
 
-    const name =
-      rawName.length > 12
-        ? rawName.slice(0, 11) + "…"
-        : rawName;
+      const name =
+        rawName.length > 20
+          ? rawName.slice(0, 19) + "…"
+          : rawName;
 
-    const district =
-      String(entry.district || "-");
+      // Se muestra exactamente lo escrito
+      // en el campo Distrito, sin agregar "D".
+      const district =
+        String(
+          entry.district ||
+          "-"
+        );
 
-    const points =
-      Number(entry.score || 0);
+      ctx.textAlign = "left";
 
-    // Posición
-    ctx.fillStyle =
-      index === 0
-        ? "#FFD700"
-        : "#FFFFFF";
+      ctx.fillStyle =
+        index === 0
+          ? "#FFD700"
+          : "#FFFFFF";
 
-    ctx.fillText(
-      position,
-      boxX + 15,
-      y
-    );
+      ctx.fillText(
+        position,
+        boxX + 15,
+        y
+      );
 
-    // Nombre
-    ctx.fillText(
-      name,
-      boxX + 45,
-      y
-    );
+      ctx.fillText(
+        name,
+        boxX + 55,
+        y
+      );
 
-    // Distrito
-    ctx.fillStyle = "#7FE7FF";
-    ctx.fillText(
-      "D" + district,
-      boxX + 185,
-      y
-    );
+      ctx.textAlign = "right";
+      ctx.fillStyle = "#7FE7FF";
 
-    // Puntuación alineada a la derecha
-    ctx.textAlign = "right";
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillText(
-      points.toLocaleString(),
-      boxX + boxWidth - 14,
-      y
-    );
+      ctx.fillText(
+        district,
+        boxX + boxWidth - 22,
+        y
+      );
 
-    ctx.textAlign = "left";
-  });
+    }
+  );
 
   ctx.restore();
 }
@@ -2935,6 +2973,10 @@ function drawStartScreen() {
   ctx.textAlign =
     "left";
 
+
+
+  // Ranking visible en la pantalla inicial.
+  drawDailyRanking();
 
 }
 
