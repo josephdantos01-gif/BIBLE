@@ -18,7 +18,8 @@ const groundY = 500;
 const groundDrawY = 350;
 
 const BASE_SPEED = 8;
-const MAX_SPEED = 16;
+const MAX_SPEED = 24;
+const SPEED_PER_LEVEL = 0.75;
 
 let gameSpeed = BASE_SPEED;
 
@@ -658,7 +659,7 @@ function createObstacle() {
       type: "raven",
       width: 110,
       height: 80,
-      position: "airHigh"
+      position: "air"
     });
   }
 
@@ -668,7 +669,7 @@ function createObstacle() {
       type: "devil",
       width: 100,
       height: 100,
-      position: "airLow"
+      position: "air"
     });
   }
 
@@ -689,16 +690,22 @@ function createObstacle() {
       obstacleType.height;
   }
 
-  // CUERVO: MÁS ARRIBA
-  else if (obstacleType.position === "airHigh") {
-    y =
-      groundY - 280;
-  }
-
-  // DIABLO: MÁS ARRIBA
+  // AÉREOS: PUEDEN SALIR EN DIFERENTES ALTURAS
   else {
+    const airHeights = [
+      groundY - 170, // bajo: obliga a saltar con cuidado
+      groundY - 220, // medio
+      groundY - 270, // alto
+      groundY - 320  // muy alto
+    ];
+
     y =
-      groundY - 210;
+      airHeights[
+        Math.floor(
+          Math.random() *
+          airHeights.length
+        )
+      ];
   }
 
   obstacles.push({
@@ -781,18 +788,25 @@ function updateObstacles() {
     obstacleTimer = 0;
 
 
+    // Cada nivel reduce el tiempo entre obstáculos.
+    // El límite evita que aparezcan de forma imposible.
     const minDistance =
-      95 -
-      Math.min(
-        level * 3,
-        25
+      Math.max(
+        38,
+        105 - (level * 4)
       );
 
+    const randomExtra =
+      Math.max(
+        25,
+        75 - (level * 2)
+      );
 
     nextObstacle =
       minDistance +
       Math.floor(
-        Math.random() * 75
+        Math.random() *
+        randomExtra
       );
 
   }
@@ -1170,68 +1184,87 @@ function collectItem(
 
 function createPowerUp() {
 
-  const random =
-    Math.random();
+  const random = Math.random();
 
   let powerUp;
 
+  // ==========================================
+  // NIVELES 1 - 9
+  // NO PUEDEN SALIR CORAZONES
+  // ==========================================
+  if (level < 10) {
 
-  // ❤️ CORAZÓN - 35%
-  if (random < 0.35) {
+    if (random < 0.45) {
+      powerUp = {
+        type: "shield",
+        width: 65,
+        height: 70
+      };
+    }
 
-    powerUp = {
-      type: "heart",
-      width: 60,
-      height: 60
-    };
+    else if (random < 0.75) {
+      powerUp = {
+        type: "sword",
+        width: 55,
+        height: 85
+      };
+    }
 
-  }
-
-
-  // 🛡️ ESCUDO - 30%
-  else if (random < 0.65) {
-
-    powerUp = {
-      type: "shield",
-      width: 65,
-      height: 70
-    };
-
-  }
-
-
-  // ⚔️ ESPADA - 20%
-  else if (random < 0.85) {
-
-    powerUp = {
-      type: "sword",
-      width: 55,
-      height: 85
-    };
+    else {
+      powerUp = {
+        type: "scroll",
+        width: 75,
+        height: 60
+      };
+    }
 
   }
 
-
-  // 📜 PERGAMINO - 15%
+  // ==========================================
+  // NIVEL 10 EN ADELANTE
+  // CORAZÓN MUY RARO: 8%
+  // ==========================================
   else {
 
-    powerUp = {
-      type: "scroll",
-      width: 75,
-      height: 60
-    };
+    if (random < 0.08) {
+      powerUp = {
+        type: "heart",
+        width: 60,
+        height: 60
+      };
+    }
+
+    else if (random < 0.45) {
+      powerUp = {
+        type: "shield",
+        width: 65,
+        height: 70
+      };
+    }
+
+    else if (random < 0.75) {
+      powerUp = {
+        type: "sword",
+        width: 55,
+        height: 85
+      };
+    }
+
+    else {
+      powerUp = {
+        type: "scroll",
+        width: 75,
+        height: 60
+      };
+    }
 
   }
 
-
   const heights = [
-
     groundY - 100,
     groundY - 160,
     groundY - 210
-
   ];
-
 
   const y =
     heights[
@@ -1241,25 +1274,13 @@ function createPowerUp() {
       )
     ];
 
-
   powerUps.push({
-
-    x:
-      canvas.width + 50,
-
+    x: canvas.width + 50,
     y: y,
-
-    width:
-      powerUp.width,
-
-    height:
-      powerUp.height,
-
-    type:
-      powerUp.type
-
+    width: powerUp.width,
+    height: powerUp.height,
+    type: powerUp.type
   });
-
 }
 
 
@@ -1637,27 +1658,14 @@ function updateLevel() {
 
 function updateDifficulty() {
 
-  const speedIncrease =
-    Math.floor(
-      score / 200
-    ) * 0.5;
-
-
+  // Aumenta la velocidad en CADA nivel.
   gameSpeed =
     BASE_SPEED +
-    speedIncrease;
+    ((level - 1) * SPEED_PER_LEVEL);
 
-
-  if (
-    gameSpeed >
-    MAX_SPEED
-  ) {
-
-    gameSpeed =
-      MAX_SPEED;
-
+  if (gameSpeed > MAX_SPEED) {
+    gameSpeed = MAX_SPEED;
   }
-
 }
 
 
