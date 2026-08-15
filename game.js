@@ -1,4 +1,4 @@
-const canvas = document.getElementById("game");
+cconst canvas = document.getElementById("game");
 
 // Opciones pensadas para reducir latencia en navegadores móviles.
 // Si un navegador no soporta alguna opción, simplemente la ignora.
@@ -456,11 +456,17 @@ collectSound.preload = "auto";
 hitSound.preload = "auto";
 gameOverSound.preload = "auto";
 
+// Pedimos al navegador que prepare especialmente el sonido
+// de Game Over desde el inicio.
+gameOverSound.load();
+hitSound.load();
+collectSound.load();
+
 bgMusic.loop = true;
 bgMusic.volume = 0.22;
 
-collectSound.volume = 1;
-hitSound.volume = 1;
+collectSound.volume = 0.60;
+hitSound.volume = 0.72;
 gameOverSound.volume = 0.78;
 
 let musicStarted = false;
@@ -2849,17 +2855,20 @@ function checkCollision(obstacle) {
 
   // GOLPE NORMAL
   matchStats.hits++;
-  playSound(hitSound);
   lives--;
   obstacle.destroyed = true;
 
   playerHit = true;
   playerHitTimer = HIT_DURATION;
 
+  // Si todavía quedan vidas, reproducimos el sonido de golpe.
   if (lives > 0) {
+    playSound(hitSound);
     return;
   }
 
+  // En la última vida NO reproducimos hit.mp3 primero.
+  // Pasamos directamente a Game Over para que suene de inmediato.
   endGame();
 }
 
@@ -3016,12 +3025,39 @@ function endGame() {
 
   if (gameOver) return;
 
-  stopMusic();
-  gameOverSound.currentTime = 0;
-  playSound(gameOverSound);
-
+  // Cambiamos el estado primero para que la pantalla de Game Over
+  // pueda dibujarse en el siguiente frame inmediatamente.
   gameOver = true;
   jumpHeld = false;
+
+  // Detenemos música y cualquier sonido de golpe pendiente.
+  stopMusic();
+
+  try {
+    hitSound.pause();
+    hitSound.currentTime = 0;
+  } catch (error) {}
+
+  // Reproducimos Game Over inmediatamente.
+  try {
+    gameOverSound.pause();
+    gameOverSound.currentTime = 0;
+
+    const gameOverPromise =
+      gameOverSound.play();
+
+    if (
+      gameOverPromise &&
+      typeof gameOverPromise.catch === "function"
+    ) {
+      gameOverPromise.catch(() => {});
+    }
+  } catch (error) {
+    console.warn(
+      "No se pudo reproducir Game Over:",
+      error
+    );
+  }
 
   const finalScore = Math.floor(score);
   const previousHighScore = highScore;
@@ -3063,7 +3099,12 @@ function endGame() {
 
   // Permitimos que se dibuje primero la pantalla GAME OVER y luego pedimos
   // únicamente nombre y distrito.
-  setTimeout(() => askAndSaveMatchResult(result), 250);
+  // En celular, abrir un prompt demasiado rápido puede interrumpir
+  // el audio. Esperamos un poco para que Game Over comience a sonar.
+  setTimeout(
+    () => askAndSaveMatchResult(result),
+    1200
+  );
 }
 
 
