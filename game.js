@@ -260,6 +260,65 @@ setTimeout(loadSecondaryAssets, 1200);
 
 
 // ==========================================
+// AUDIO
+// ==========================================
+
+// Coloca estos 4 archivos en:
+// assets/audio/music.mp3
+// assets/audio/collect.mp3
+// assets/audio/hit.mp3
+// assets/audio/gameover.mp3
+
+const bgMusic = new Audio("assets/audio/music.mp3");
+const collectSound = new Audio("assets/audio/collect.mp3");
+const hitSound = new Audio("assets/audio/hit.mp3");
+const gameOverSound = new Audio("assets/audio/gameover.mp3");
+
+// Ayuda al navegador a preparar el audio sin bloquear la carga visual.
+bgMusic.preload = "metadata";
+collectSound.preload = "auto";
+hitSound.preload = "auto";
+gameOverSound.preload = "auto";
+
+bgMusic.loop = true;
+bgMusic.volume = 0.22;
+
+collectSound.volume = 0.60;
+hitSound.volume = 0.72;
+gameOverSound.volume = 0.78;
+
+let musicStarted = false;
+
+function startMusic() {
+  if (gameOver) return;
+
+  if (!musicStarted) {
+    bgMusic.currentTime = 0;
+    musicStarted = true;
+  }
+
+  bgMusic.play().catch(() => {
+    // En móviles el navegador puede esperar otra interacción del usuario.
+  });
+}
+
+function stopMusic() {
+  bgMusic.pause();
+}
+
+function playSound(sound) {
+  if (!sound) return;
+
+  try {
+    sound.currentTime = 0;
+    sound.play().catch(() => {});
+  } catch (error) {
+    console.warn("No se pudo reproducir un sonido:", error);
+  }
+}
+
+
+// ==========================================
 // ANIMACIÓN DEL PERSONAJE
 // ==========================================
 
@@ -1417,6 +1476,8 @@ function collectItem(
   item
 ) {
 
+  playSound(collectSound);
+
   score +=
     item.value *
     combo;
@@ -1637,6 +1698,8 @@ function checkPowerUpCollision(powerUp) {
 
 function activatePowerUp(powerUp) {
 
+  playSound(collectSound);
+
   matchStats.powerUpsTotal++;
 
   if (powerUp.type === "heart") matchStats.hearts++;
@@ -1821,34 +1884,33 @@ function updateCombo() {
 
 function drawCombo() {
 
-  if (
-    combo <= 1
-  ) {
-
+  if (combo <= 1) {
     return;
-
   }
 
+  ctx.save();
 
-  ctx.fillStyle =
-    "#FFD700";
+  // Debajo de los corazones, lejos del texto bíblico.
+  const comboText = "COMBO x" + combo;
+  const boxX = 22;
+  const boxY = 76;
+  const boxWidth = 170;
+  const boxHeight = 42;
 
+  ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+  ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
-  ctx.font =
-    "bold 26px Arial";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.font = "bold 24px monospace";
+  ctx.fillStyle = "#FFD700";
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 4;
 
+  ctx.strokeText(comboText, boxX + 12, boxY + boxHeight / 2);
+  ctx.fillText(comboText, boxX + 12, boxY + boxHeight / 2);
 
-  ctx.fillText(
-
-    "COMBO x" +
-    combo,
-
-    780,
-
-    55
-
-  );
-
+  ctx.restore();
 }
 
 
@@ -1923,6 +1985,7 @@ function checkCollision(obstacle) {
 
   // GOLPE NORMAL
   matchStats.hits++;
+  playSound(hitSound);
   lives--;
   obstacle.destroyed = true;
 
@@ -2070,6 +2133,10 @@ function endGame() {
 
   if (gameOver) return;
 
+  stopMusic();
+  gameOverSound.currentTime = 0;
+  playSound(gameOverSound);
+
   gameOver = true;
   jumpHeld = false;
 
@@ -2204,6 +2271,11 @@ function restartGame() {
   bibleMessageTimer = 0;
   currentBibleMessageIndex = Math.floor(Math.random() * biblicalMessages.length);
   beginMatchTracking();
+
+  gameOverSound.pause();
+  gameOverSound.currentTime = 0;
+
+  startMusic();
 
 }
 
@@ -2549,6 +2621,8 @@ document.addEventListener(
       gameStarted =
         true;
 
+      startMusic();
+
       return;
 
     }
@@ -2657,6 +2731,8 @@ canvas.addEventListener(
 
       gameStarted =
         true;
+
+      startMusic();
 
       return;
 
