@@ -1,8 +1,146 @@
 const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+
+// Opciones pensadas para reducir latencia en navegadores móviles.
+// Si un navegador no soporta alguna opción, simplemente la ignora.
+const ctx = canvas.getContext("2d", {
+  alpha: false,
+  desynchronized: true
+});
+
+ctx.imageSmoothingEnabled = false;
 
 canvas.width = 1280;
 canvas.height = 720;
+
+// ==========================================
+// OPTIMIZACIÓN PARA CELULAR
+// ==========================================
+
+const isMobileDevice =
+  /Android|iPhone|iPad|iPod|Mobile/i.test(
+    navigator.userAgent
+  );
+
+// En celular dibujamos menos árboles individuales.
+// El resto del escenario conserva la misma apariencia.
+const MOBILE_TREE_SPACING = 560;
+const DESKTOP_TREE_SPACING = 420;
+
+// Cache de imágenes ya escaladas.
+// Evita que Chrome tenga que redimensionar PNG grandes
+// 60 veces por segundo.
+const renderCache = {
+  sky: null,
+  mountains: null,
+  forest: null,
+  tree: null,
+  ground: null
+};
+
+function createCachedLayer(
+  image,
+  width,
+  height
+) {
+
+  if (
+    !image ||
+    !image.complete ||
+    image.naturalWidth === 0 ||
+    width <= 0 ||
+    height <= 0
+  ) {
+    return null;
+  }
+
+  const buffer =
+    document.createElement("canvas");
+
+  buffer.width =
+    Math.ceil(width);
+
+  buffer.height =
+    Math.ceil(height);
+
+  const bufferCtx =
+    buffer.getContext("2d", {
+      alpha: true
+    });
+
+  bufferCtx.imageSmoothingEnabled =
+    false;
+
+  bufferCtx.drawImage(
+    image,
+    0,
+    0,
+    buffer.width,
+    buffer.height
+  );
+
+  return buffer;
+}
+
+function rebuildRenderCache() {
+
+  renderCache.sky =
+    createCachedLayer(
+      skyImage,
+      canvas.width,
+      canvas.height
+    );
+
+  renderCache.mountains =
+    createCachedLayer(
+      mountainsImage,
+      canvas.width,
+      groundY - 145
+    );
+
+  renderCache.forest =
+    createCachedLayer(
+      forestImage,
+      canvas.width,
+      groundY - 235
+    );
+
+  renderCache.tree =
+    createCachedLayer(
+      treeImage,
+      105,
+      170
+    );
+
+  renderCache.ground =
+    createCachedLayer(
+      groundImage,
+      333,
+      canvas.height -
+        groundDrawY +
+        40
+    );
+}
+
+function prepareCachedImage(
+  image
+) {
+
+  if (!image) return;
+
+  if (
+    image.complete &&
+    image.naturalWidth > 0
+  ) {
+    rebuildRenderCache();
+    return;
+  }
+
+  image.addEventListener(
+    "load",
+    rebuildRenderCache,
+    { once: true }
+  );
+}
 
 
 // ==========================================
@@ -150,6 +288,17 @@ groundImage.fetchPriority = "high";
 groundImage.src =
   "assets/background/ground.png";
 
+// Construimos la caché en cuanto cada elemento visual está disponible.
+[
+  skyImage,
+  mountainsImage,
+  forestImage,
+  treeImage,
+  groundImage
+].forEach(
+  prepareCachedImage
+);
+
 
 // ==========================================
 // MOVIMIENTO DEL ESCENARIO
@@ -271,6 +420,13 @@ window.addEventListener("load", () => {
 // Respaldo por si el evento load ya ocurrió o algún navegador lo retrasa.
 setTimeout(loadSecondaryAssets, 1200);
 
+// Respaldo: reconstruimos la caché poco después de la carga.
+// Esto no bloquea el juego.
+setTimeout(
+  rebuildRenderCache,
+  700
+);
+
 // El ranking no bloquea el inicio del juego.
 // Se carga en paralelo unos instantes después.
 setTimeout(
@@ -303,8 +459,8 @@ gameOverSound.preload = "auto";
 bgMusic.loop = true;
 bgMusic.volume = 0.22;
 
-collectSound.volume = 0.60;
-hitSound.volume = 0.72;
+collectSound.volume = 1;
+hitSound.volume = 1;
 gameOverSound.volume = 0.78;
 
 let musicStarted = false;
@@ -847,7 +1003,9 @@ function askAndSaveMatchResult(baseResult) {
     1800
   );
 
-  console.table(result);
+  if (!isMobileDevice) {
+    console.table(result);
+  }
 }
 
 
@@ -858,11 +1016,23 @@ function askAndSaveMatchResult(baseResult) {
 
 function drawBackground() {
 
+  // ==========================================
   // CIELO
-  if (
+  // ==========================================
+
+  if (renderCache.sky) {
+
+    ctx.drawImage(
+      renderCache.sky,
+      0,
+      0
+    );
+
+  } else if (
     skyImage.complete &&
     skyImage.naturalWidth > 0
   ) {
+
     ctx.drawImage(
       skyImage,
       0,
@@ -870,37 +1040,77 @@ function drawBackground() {
       canvas.width,
       canvas.height
     );
+
   } else {
+
     ctx.fillStyle = "#41B6E6";
+
     ctx.fillRect(
       0,
       0,
       canvas.width,
       canvas.height
     );
+
   }
 
+
+  // ==========================================
   // MOVER CAPAS
+  // ==========================================
+
   if (
     gameStarted &&
     !gameOver &&
     !paused
   ) {
-    mountainOffset -= gameSpeed * 0.08;
-    forestOffset -= gameSpeed * 0.20;
-    treeOffset -= gameSpeed * 0.45;
+
+    mountainOffset -=
+      gameSpeed * 0.08;
+
+    forestOffset -=
+      gameSpeed * 0.20;
+
+    treeOffset -=
+      gameSpeed * 0.45;
+
   }
 
+
+  // ==========================================
   // MONTAÑAS
-  if (mountainOffset <= -canvas.width) {
-    mountainOffset += canvas.width;
-  }
+  // ==========================================
 
   if (
+    mountainOffset <=
+    -canvas.width
+  ) {
+
+    mountainOffset +=
+      canvas.width;
+
+  }
+
+  if (renderCache.mountains) {
+
+    ctx.drawImage(
+      renderCache.mountains,
+      mountainOffset,
+      145
+    );
+
+    ctx.drawImage(
+      renderCache.mountains,
+      mountainOffset +
+        canvas.width,
+      145
+    );
+
+  } else if (
     mountainsImage.complete &&
     mountainsImage.naturalWidth > 0
   ) {
-    // Las hacemos llegar hasta la línea del suelo.
+
     ctx.drawImage(
       mountainsImage,
       mountainOffset,
@@ -911,24 +1121,50 @@ function drawBackground() {
 
     ctx.drawImage(
       mountainsImage,
-      mountainOffset + canvas.width,
+      mountainOffset +
+        canvas.width,
       145,
       canvas.width,
       groundY - 145
     );
+
   }
 
+
+  // ==========================================
   // BOSQUE
-  if (forestOffset <= -canvas.width) {
-    forestOffset += canvas.width;
-  }
+  // ==========================================
 
   if (
+    forestOffset <=
+    -canvas.width
+  ) {
+
+    forestOffset +=
+      canvas.width;
+
+  }
+
+  if (renderCache.forest) {
+
+    ctx.drawImage(
+      renderCache.forest,
+      forestOffset,
+      235
+    );
+
+    ctx.drawImage(
+      renderCache.forest,
+      forestOffset +
+        canvas.width,
+      235
+    );
+
+  } else if (
     forestImage.complete &&
     forestImage.naturalWidth > 0
   ) {
-    // El bosque baja hasta groundY para que no quede
-    // una franja de color sólido entre bosque y tierra.
+
     ctx.drawImage(
       forestImage,
       forestOffset,
@@ -939,41 +1175,93 @@ function drawBackground() {
 
     ctx.drawImage(
       forestImage,
-      forestOffset + canvas.width,
+      forestOffset +
+        canvas.width,
       235,
       canvas.width,
       groundY - 235
     );
+
   }
 
+
+  // ==========================================
   // ÁRBOLES INDIVIDUALES
-  const treeSpacing = 420;
+  // ==========================================
 
-  if (treeOffset <= -treeSpacing) {
-    treeOffset += treeSpacing;
-  }
+  const treeSpacing =
+    isMobileDevice
+      ? MOBILE_TREE_SPACING
+      : DESKTOP_TREE_SPACING;
 
   if (
-    treeImage.complete &&
-    treeImage.naturalWidth > 0
+    treeOffset <=
+    -treeSpacing
   ) {
-    const treeWidth = 105;
-    const treeHeight = 170;
+
+    treeOffset +=
+      treeSpacing;
+
+  }
+
+  const treeWidth = 105;
+  const treeHeight = 170;
+
+  if (
+    renderCache.tree ||
+    (
+      treeImage.complete &&
+      treeImage.naturalWidth > 0
+    )
+  ) {
 
     for (
-      let x = treeOffset + 250;
-      x < canvas.width + treeSpacing;
-      x += treeSpacing
+      let x =
+        treeOffset + 250;
+
+      x <
+        canvas.width +
+        treeSpacing;
+
+      x +=
+        treeSpacing
     ) {
-      ctx.drawImage(
-        treeImage,
-        x,
-        groundY - treeHeight,
-        treeWidth,
-        treeHeight
-      );
+
+      // No intentamos dibujar árboles completamente
+      // fuera de pantalla.
+      if (
+        x + treeWidth < 0 ||
+        x > canvas.width
+      ) {
+        continue;
+      }
+
+      if (renderCache.tree) {
+
+        ctx.drawImage(
+          renderCache.tree,
+          x,
+          groundY -
+            treeHeight
+        );
+
+      } else {
+
+        ctx.drawImage(
+          treeImage,
+          x,
+          groundY -
+            treeHeight,
+          treeWidth,
+          treeHeight
+        );
+
+      }
+
     }
+
   }
+
 }
 
 
@@ -983,70 +1271,93 @@ function drawBackground() {
 
 function drawGround() {
 
+  const tileWidth = 330;
+
+  const tileHeight =
+    canvas.height -
+    groundDrawY +
+    40;
 
 
   // ==========================================
-  // IMAGEN DEL SUELO
+  // MOVIMIENTO DEL SUELO
   // ==========================================
 
   if (
-    groundImage.complete &&
-    groundImage.naturalWidth > 0
+    gameStarted &&
+    !gameOver &&
+    !paused
   ) {
 
-    // Un poco más ancho para que los bloques
-    // se monten entre sí y no dejen huecos
-    const tileWidth = 330;
+    groundOffset -=
+      gameSpeed;
 
-    // Más alto para rellenar la pantalla
-    const tileHeight =
-      canvas.height - groundDrawY + 40;
+  }
 
 
-    // MOVIMIENTO DEL SUELO
+  if (
+    groundOffset <=
+    -tileWidth
+  ) {
 
-    if (
-      gameStarted &&
-      !gameOver &&
-      !paused
-    ) {
+    groundOffset +=
+      tileWidth;
 
-      groundOffset -= gameSpeed;
-
-    }
+  }
 
 
-    // Reiniciar desplazamiento
+  // ==========================================
+  // DIBUJAR BLOQUES
+  // ==========================================
 
-    if (
-      groundOffset <= -tileWidth
-    ) {
-
-      groundOffset += tileWidth;
-
-    }
-
-
-    // ==========================================
-    // DIBUJAR BLOQUES
-    // ==========================================
+  if (
+    renderCache.ground ||
+    (
+      groundImage.complete &&
+      groundImage.naturalWidth > 0
+    )
+  ) {
 
     for (
-      let x = groundOffset - tileWidth;
-      x < canvas.width + tileWidth;
-      x += tileWidth - 2
+      let x =
+        groundOffset -
+        tileWidth;
+
+      x <
+        canvas.width +
+        tileWidth;
+
+      x +=
+        tileWidth - 2
     ) {
 
-      ctx.drawImage(
-        groundImage,
+      // Omite bloques totalmente fuera de pantalla.
+      if (
+        x + tileWidth < 0 ||
+        x > canvas.width
+      ) {
+        continue;
+      }
 
-        x,
-        groundDrawY,
+      if (renderCache.ground) {
 
-        // +3 evita líneas entre bloques
-        tileWidth + 3,
-        tileHeight
-      );
+        ctx.drawImage(
+          renderCache.ground,
+          x,
+          groundDrawY
+        );
+
+      } else {
+
+        ctx.drawImage(
+          groundImage,
+          x,
+          groundDrawY,
+          tileWidth + 3,
+          tileHeight
+        );
+
+      }
 
     }
 
@@ -1468,7 +1779,14 @@ function updateObstacles() {
 
     obstacle.x -= gameSpeed;
 
-    drawObstacle(obstacle);
+    // Solo dibujamos si todavía puede verse.
+    if (
+      obstacle.x +
+      obstacle.width >= 0 &&
+      obstacle.x <= canvas.width
+    ) {
+      drawObstacle(obstacle);
+    }
 
     checkCollision(obstacle);
 
@@ -1667,9 +1985,15 @@ function updateCollectibles() {
       gameSpeed;
 
 
-    drawCollectible(
-      item
-    );
+    if (
+      item.x +
+      item.width >= 0 &&
+      item.x <= canvas.width
+    ) {
+      drawCollectible(
+        item
+      );
+    }
 
 
     if (
@@ -2204,9 +2528,15 @@ function updatePowerUps() {
       gameSpeed;
 
 
-    drawPowerUp(
-      powerUp
-    );
+    if (
+      powerUp.x +
+      powerUp.width >= 0 &&
+      powerUp.x <= canvas.width
+    ) {
+      drawPowerUp(
+        powerUp
+      );
+    }
 
 
     // RECOGER
