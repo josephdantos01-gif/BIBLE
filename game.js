@@ -382,7 +382,11 @@ let collectibles = [];
 let powerUps = [];
 
 let powerUpTimer = 0;
-let nextPowerUp = 1000;
+let nextPowerUp = 650;
+
+// Desde nivel 5, si pasan varios power-ups sin corazón,
+// el juego fuerza uno para evitar rachas de mala suerte.
+let powerUpsWithoutHeart = 0;
 
 // Estados
 // ==========================================
@@ -1566,7 +1570,13 @@ function createPowerUp() {
   // ==========================================
   else if (level < 15) {
 
-    if (random < 0.05) {
+    // 20% de probabilidad de corazón.
+    // Si ya salieron 4 power-ups sin corazón,
+    // el siguiente será un corazón garantizado.
+    if (
+      random < 0.20 ||
+      powerUpsWithoutHeart >= 4
+    ) {
       powerUp = {
         type: "heart",
         width: 60,
@@ -1574,7 +1584,7 @@ function createPowerUp() {
       };
     }
 
-    else if (random < 0.35) {
+    else if (random < 0.45) {
       powerUp = {
         type: "shield",
         width: 65,
@@ -1607,7 +1617,13 @@ function createPowerUp() {
   // ==========================================
   else {
 
-    if (random < 0.05) {
+    // Desde nivel 15 siguen apareciendo corazones,
+    // pero un poco menos: 15%.
+    // También se garantiza uno tras 4 power-ups sin corazón.
+    if (
+      random < 0.15 ||
+      powerUpsWithoutHeart >= 4
+    ) {
       powerUp = {
         type: "heart",
         width: 60,
@@ -1615,7 +1631,7 @@ function createPowerUp() {
       };
     }
 
-    else if (random < 0.27) {
+    else if (random < 0.37) {
       powerUp = {
         type: "shield",
         width: 65,
@@ -1653,6 +1669,17 @@ function createPowerUp() {
         Math.random() * heights.length
       )
     ];
+
+  // Control de aparición de corazones.
+  if (level >= 5) {
+    if (powerUp.type === "heart") {
+      powerUpsWithoutHeart = 0;
+    } else {
+      powerUpsWithoutHeart++;
+    }
+  } else {
+    powerUpsWithoutHeart = 0;
+  }
 
   powerUps.push({
     x: canvas.width + 50,
@@ -1788,21 +1815,27 @@ function updatePowerUps() {
     powerUpTimer = 0;
 
 
-    // En niveles altos los power-ups aparecen menos seguido.
-    if (level < 10) {
+    // Power-ups más frecuentes para que los corazones
+    // realmente puedan aparecer durante una partida.
+    if (level < 5) {
       nextPowerUp =
-        1050 +
-        Math.floor(Math.random() * 600);
+        700 +
+        Math.floor(Math.random() * 300);
+    }
+    else if (level < 10) {
+      nextPowerUp =
+        500 +
+        Math.floor(Math.random() * 250);
     }
     else if (level < 15) {
       nextPowerUp =
-        1200 +
-        Math.floor(Math.random() * 700);
+        550 +
+        Math.floor(Math.random() * 300);
     }
     else {
       nextPowerUp =
-        1400 +
-        Math.floor(Math.random() * 800);
+        650 +
+        Math.floor(Math.random() * 350);
     }
 
   }
@@ -2384,13 +2417,14 @@ function restartGame() {
   collectibleTimer = 0;
 
   powerUpTimer = 0;
+  powerUpsWithoutHeart = 0;
 
 
   nextObstacle = 110;
 
   nextCollectible = 180;
 
-  nextPowerUp = 1000;
+  nextPowerUp = 650;
   lives = MAX_LIVES;
   shieldActive = false;
   swordActive = false;
