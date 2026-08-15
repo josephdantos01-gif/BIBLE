@@ -18,8 +18,8 @@ const groundY = 500;
 const groundDrawY = 350;
 
 const BASE_SPEED = 10;
-const MAX_SPEED = 34;
-const SPEED_PER_LEVEL = 1.15;
+const MAX_SPEED = 30;
+const SPEED_PER_LEVEL = 0.75;
 
 let gameSpeed = BASE_SPEED;
 
@@ -57,7 +57,8 @@ const COMBO_TIME = 240;
 
 // ==========================================
 // FRENESÍ
-// Se activa al recoger 5 objetos buenos seguidos sin recibir daño.
+// Disponible solamente desde el NIVEL 10.
+// Se activa al recoger 5 coleccionables seguidos sin recibir daño.
 // ==========================================
 let collectibleStreak = 0;
 let frenzyActive = false;
@@ -1490,16 +1491,29 @@ function collectItem(
   matchStats.maxCombo = Math.max(matchStats.maxCombo, combo);
   comboTimer = COMBO_TIME;
 
-  // Cada objeto bueno aumenta la racha.
-  collectibleStreak++;
+  // ==========================================
+  // FRENESÍ SOLO DESDE NIVEL 10
+  // Antes del nivel 10 no acumulamos racha.
+  // ==========================================
+  if (level >= 10) {
 
-  // 5 seguidos = FRENESÍ.
-  if (
-    collectibleStreak >= FRENZY_TRIGGER &&
-    !frenzyActive
-  ) {
-    frenzyActive = true;
-    frenzyTimer = FRENZY_DURATION;
+    collectibleStreak++;
+
+    // 5 coleccionables seguidos = FRENESÍ.
+    if (
+      collectibleStreak >= FRENZY_TRIGGER &&
+      !frenzyActive
+    ) {
+      frenzyActive = true;
+      frenzyTimer = FRENZY_DURATION;
+    }
+
+  } else {
+
+    collectibleStreak = 0;
+    frenzyActive = false;
+    frenzyTimer = 0;
+
   }
 }
 
@@ -1515,10 +1529,10 @@ function createPowerUp() {
   let powerUp;
 
   // ==========================================
-  // NIVELES 1 - 9
+  // NIVELES 1 - 7
   // SIN CORAZONES
   // ==========================================
-  if (level < 10) {
+  if (level < 8) {
 
     if (random < 0.38) {
       powerUp = {
@@ -1547,8 +1561,8 @@ function createPowerUp() {
   }
 
   // ==========================================
-  // NIVEL 10+
-  // CORAZÓN MUY RARO: 5%
+  // NIVELES 8 - 14
+  // CORAZÓN RARO: 5%
   // ==========================================
   else if (level < 15) {
 
@@ -1588,8 +1602,8 @@ function createPowerUp() {
 
   // ==========================================
   // NIVEL 15+
-  // Mantiene corazón al 5%, pero reduce
-  // escudo y espada para aumentar dificultad.
+  // Corazón sigue al 5%, pero escudo y espada
+  // son menos frecuentes para mantener dificultad.
   // ==========================================
   else {
 
@@ -1648,7 +1662,6 @@ function createPowerUp() {
     type: powerUp.type
   });
 }
-
 
 //DIBUJAR LOS POWEUPS
 
@@ -1924,51 +1937,105 @@ function drawCombo() {
 function drawCollectibleCounter() {
   ctx.save();
 
+  // Tres contadores independientes:
+  // estrella, gema y corona.
   const boxX = 22;
   const boxY = 124;
-  const boxWidth = 170;
-  const boxHeight = 46;
+  const boxWidth = 178;
+  const rowHeight = 40;
+  const boxHeight = rowHeight * 3 + 10;
 
   ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
   ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
-  const iconSize = 32;
-  const iconX = boxX + 10;
-  const iconY = boxY + 7;
+  const rows = [
+    {
+      image: collectibleImages.star,
+      value: matchStats.stars,
+      fallback: "#FFD700"
+    },
+    {
+      image: collectibleImages.gem,
+      value: matchStats.gems,
+      fallback: "#22D3EE"
+    },
+    {
+      image: collectibleImages.crown,
+      value: matchStats.crowns,
+      fallback: "#F59E0B"
+    }
+  ];
 
-  if (
-    collectibleImages.star.complete &&
-    collectibleImages.star.naturalWidth > 0
-  ) {
-    ctx.drawImage(
-      collectibleImages.star,
-      iconX,
-      iconY,
-      iconSize,
-      iconSize
-    );
-  } else {
-    ctx.fillStyle = "#FFD700";
-    ctx.beginPath();
-    ctx.arc(iconX + 16, iconY + 16, 12, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  rows.forEach((row, index) => {
 
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-  ctx.font = "bold 24px monospace";
-  ctx.fillStyle = "#FFFFFF";
-  ctx.strokeStyle = "#000000";
-  ctx.lineWidth = 4;
+    const iconSize = 28;
+    const iconX = boxX + 12;
+    const iconY =
+      boxY +
+      7 +
+      (index * rowHeight);
 
-  const totalText = "x " + matchStats.collectiblesTotal;
-  ctx.strokeText(totalText, boxX + 54, boxY + boxHeight / 2);
-  ctx.fillText(totalText, boxX + 54, boxY + boxHeight / 2);
+    if (
+      row.image &&
+      row.image.complete &&
+      row.image.naturalWidth > 0
+    ) {
+
+      ctx.drawImage(
+        row.image,
+        iconX,
+        iconY,
+        iconSize,
+        iconSize
+      );
+
+    } else {
+
+      ctx.fillStyle = row.fallback;
+      ctx.beginPath();
+      ctx.arc(
+        iconX + iconSize / 2,
+        iconY + iconSize / 2,
+        10,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+
+    }
+
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 22px monospace";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 4;
+
+    const countText = "x " + row.value;
+    const textX = boxX + 56;
+    const textY =
+      boxY +
+      21 +
+      (index * rowHeight);
+
+    ctx.strokeText(countText, textX, textY);
+    ctx.fillText(countText, textX, textY);
+
+  });
 
   ctx.restore();
 }
 
 function updateFrenzy() {
+
+  // Frenesí no existe antes del nivel 10.
+  if (level < 10) {
+    frenzyActive = false;
+    frenzyTimer = 0;
+    collectibleStreak = 0;
+    return;
+  }
+
   if (!frenzyActive) return;
 
   frenzyTimer--;
