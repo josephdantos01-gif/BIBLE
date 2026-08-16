@@ -8,27 +8,47 @@ html,
 body {
   width: 100%;
   height: 100%;
+  min-height: 100%;
   overflow: hidden;
   background: #000;
 }
 
-/* CONTENEDOR */
+body {
+  position: fixed;
+  inset: 0;
+}
+
+
+/* ==========================================
+   CONTENEDOR DEL JUEGO
+   ========================================== */
+
 #game-container {
   position: fixed;
 
   top: 50%;
   left: 50%;
 
-  transform: translate(-50%, -50%);
-
   display: flex;
   justify-content: center;
   align-items: center;
+
+  transform:
+    translate(-50%, -50%);
+
+  -webkit-transform:
+    translate(-50%, -50%);
+
+  transform-origin:
+    center center;
+
+  -webkit-transform-origin:
+    center center;
 }
 
 
 /* ==========================================
-   JUEGO
+   CANVAS
    ========================================== */
 
 #game {
@@ -37,27 +57,42 @@ body {
   width: 100%;
   height: 100%;
 
+  background: transparent;
+
   image-rendering: pixelated;
-  image-rendering: crisp-edges;
+
+  /* Compatibilidad Safari */
+  image-rendering:
+    -webkit-optimize-contrast;
 
   touch-action: none;
+
+  -webkit-user-select: none;
+  user-select: none;
+
+  -webkit-touch-callout: none;
 }
 
 
 /* ==========================================
-   PC O CELULAR HORIZONTAL
+   PC / CELULAR HORIZONTAL
    ========================================== */
 
 @media (orientation: landscape) {
 
   #game-container {
 
-    width: min(100vw, calc(100vh * 16 / 9));
+    width:
+      min(
+        100vw,
+        calc(100vh * 16 / 9)
+      );
 
-    height: min(
-      100vh,
-      calc(100vw * 9 / 16)
-    );
+    height:
+      min(
+        100vh,
+        calc(100vw * 9 / 16)
+      );
 
   }
 
@@ -72,24 +107,42 @@ body {
 
   #game-container {
 
-    position: fixed;
+    /*
+      FALLBACK PARA SAFARI:
+      primero vh y luego dvh para navegadores
+      que soportan correctamente el viewport dinámico.
+    */
 
-    top: 50%;
-    left: 50%;
+    width: 92vh;
 
-    /* usamos el alto visible REAL de Chrome */
+    height:
+      calc(92vh * 9 / 16);
+
+
     width: 92dvh;
 
-    height: calc(92dvh * 9 / 16);
+    height:
+      calc(92dvh * 9 / 16);
+
 
     max-width: none;
     max-height: none;
+
 
     transform:
       translate(-50%, -50%)
       rotate(90deg);
 
-    transform-origin: center center;
+    -webkit-transform:
+      translate(-50%, -50%)
+      rotate(90deg);
+
+
+    transform-origin:
+      center center;
+
+    -webkit-transform-origin:
+      center center;
 
   }
 
