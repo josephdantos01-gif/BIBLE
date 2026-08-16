@@ -583,6 +583,34 @@ function loadDailyRanking() {
   rankingScriptElement = script;
 }
 
+// ==========================================
+// ACTUALIZACIÓN AUTOMÁTICA DEL RANKING
+// ==========================================
+// También consulta el TOP 5 periódicamente para que las
+// puntuaciones de otros celulares aparezcan sin recargar la página.
+let rankingAutoRefresh = null;
+
+function startRankingAutoRefresh() {
+
+  if (rankingAutoRefresh) return;
+
+  rankingAutoRefresh = setInterval(() => {
+
+    // No hacemos consultas mientras se está jugando.
+    // Solo al inicio o cuando ya terminó la partida.
+    if (!gameStarted || gameOver) {
+      loadDailyRanking();
+    }
+
+  }, 10000);
+}
+
+setTimeout(
+  startRankingAutoRefresh,
+  1000
+);
+
+
 function drawDailyRanking() {
 
   // Panel ancho: Nombre + Distrito + Puntos.
@@ -875,12 +903,15 @@ function askAndSaveMatchResult(baseResult) {
   saveMatchLocally(result);
   sendMatchToEndpoint(result);
 
-  // Damos un momento a Google Sheets para registrar la partida
-  // y después actualizamos el TOP 5.
-  setTimeout(
-    loadDailyRanking,
-    1800
-  );
+  // ==========================================
+  // ACTUALIZAR RANKING DESPUÉS DE GUARDAR
+  // ==========================================
+  // El POST usa no-cors y Google Apps Script puede tardar
+  // algunos segundos en escribir la nueva fila.
+  // Por eso hacemos varios intentos en lugar de uno solo.
+  setTimeout(loadDailyRanking, 1500);
+  setTimeout(loadDailyRanking, 3500);
+  setTimeout(loadDailyRanking, 6500);
 
   if (!isMobileDevice) {
     console.table(result);
@@ -3642,7 +3673,7 @@ if (playerHit) {
 
 
 // ==========================================
-// INICIAR ASDASDA
+// INICIAR
 // ==========================================
 
 gameLoop();
