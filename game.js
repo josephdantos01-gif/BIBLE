@@ -516,7 +516,7 @@ const STATS_ENDPOINT =
   "https://script.google.com/macros/s/AKfycbypUZP7UgahGdYk0ZDBhesSCIoQMjAm5sN60vZosMsEOg6AtfUis7oiW3L6Y33Kzgpf/exec";
 
 // ==========================================
-// RANKING TOP 5 DEL DÍA
+// RANKING TOP 5 GENERAL
 // Se obtiene desde Google Apps Script usando JSONP,
 // para evitar problemas de CORS en GitHub Pages.
 // ==========================================
@@ -657,13 +657,13 @@ function drawDailyRanking() {
   ctx.lineWidth = 4;
 
   ctx.strokeText(
-    "🏆 TOP 5 DE HOY",
+    "🏆 TOP 5 GENERAL",
     boxX + boxWidth / 2,
     boxY + 25
   );
 
   ctx.fillText(
-    "🏆 TOP 5 DE HOY",
+    "🏆 TOP 5 GENERAL",
     boxX + boxWidth / 2,
     boxY + 25
   );
