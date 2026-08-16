@@ -48,6 +48,14 @@ let level = 1;
 let highScore =
   Number(localStorage.getItem("levelUpHighScore")) || 0;
 
+// Récord que existía cuando comenzó la partida.
+// Sirve para mostrar el aviso una sola vez cuando se supera.
+let recordAtGameStart = highScore;
+let newRecordAlertShown = false;
+let newRecordAlertTimer = 0;
+
+const NEW_RECORD_ALERT_DURATION = 180; // ~3 segundos a 60 FPS
+
 let gameStarted = false;
 let gameOver = false;
 let paused = false;
@@ -86,6 +94,16 @@ const FRENZY_TRIGGER = 5;
 const FRENZY_DURATION = 420; // aprox. 7 segundos a 60 FPS
 const FRENZY_SPEED_BONUS = 3;
 const FRENZY_SCORE_MULTIPLIER = 2;
+
+// ==========================================
+// CORONA DIVINA / INVULNERABILIDAD
+// La corona da 5 segundos sin recibir daño.
+// ==========================================
+let crownInvincible = false;
+let crownInvincibleTimer = 0;
+
+const CROWN_INVINCIBLE_DURATION = 300; // ~5 segundos a 60 FPS
+
 
 
 // ==========================================
@@ -1911,9 +1929,25 @@ function collectItem(
 
   matchStats.collectiblesTotal++;
 
-  if (item.type === "star") matchStats.stars++;
-  else if (item.type === "gem") matchStats.gems++;
-  else if (item.type === "crown") matchStats.crowns++;
+  if (item.type === "star") {
+    matchStats.stars++;
+  }
+
+  else if (item.type === "gem") {
+    matchStats.gems++;
+  }
+
+  else if (item.type === "crown") {
+
+    matchStats.crowns++;
+
+    // 👑 CORONA DIVINA
+    // Reinicia la protección a 5 segundos.
+    crownInvincible = true;
+    crownInvincibleTimer =
+      CROWN_INVINCIBLE_DURATION;
+
+  }
 
   combo++;
 
@@ -2559,6 +2593,197 @@ function drawCollectibleCounter() {
   ctx.restore();
 }
 
+function updateCrownInvincibility() {
+
+  if (!crownInvincible) return;
+
+  crownInvincibleTimer--;
+
+  if (crownInvincibleTimer <= 0) {
+    crownInvincible = false;
+    crownInvincibleTimer = 0;
+  }
+}
+
+
+function drawCrownInvincibility() {
+
+  if (!crownInvincible) return;
+
+  const seconds =
+    Math.max(
+      1,
+      Math.ceil(
+        crownInvincibleTimer / 60
+      )
+    );
+
+  ctx.save();
+
+  const boxWidth = 250;
+  const boxHeight = 54;
+
+  const boxX = 25;
+  const boxY = 285;
+
+  ctx.fillStyle =
+    "rgba(0, 0, 0, 0.48)";
+
+  ctx.fillRect(
+    boxX,
+    boxY,
+    boxWidth,
+    boxHeight
+  );
+
+  ctx.strokeStyle = "#FFD700";
+  ctx.lineWidth = 2;
+
+  ctx.strokeRect(
+    boxX,
+    boxY,
+    boxWidth,
+    boxHeight
+  );
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.font =
+    "bold 17px monospace";
+
+  ctx.fillStyle = "#FFD700";
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 4;
+
+  const text =
+    "👑 INVENCIBLE " +
+    seconds +
+    "s";
+
+  ctx.strokeText(
+    text,
+    boxX + boxWidth / 2,
+    boxY + boxHeight / 2
+  );
+
+  ctx.fillText(
+    text,
+    boxX + boxWidth / 2,
+    boxY + boxHeight / 2
+  );
+
+  ctx.restore();
+}
+
+
+// ==========================================
+// AVISO DE NUEVO RÉCORD
+// ==========================================
+
+function updateNewRecordAlert() {
+
+  if (
+    !newRecordAlertShown &&
+    Math.floor(score) >
+      recordAtGameStart
+  ) {
+
+    newRecordAlertShown = true;
+    newRecordAlertTimer =
+      NEW_RECORD_ALERT_DURATION;
+  }
+
+  if (newRecordAlertTimer > 0) {
+    newRecordAlertTimer--;
+  }
+}
+
+
+function drawNewRecordAlert() {
+
+  if (newRecordAlertTimer <= 0) {
+    return;
+  }
+
+  ctx.save();
+
+  const boxWidth = 500;
+  const boxHeight = 95;
+
+  const boxX =
+    (canvas.width - boxWidth) / 2;
+
+  const boxY = 105;
+
+  ctx.fillStyle =
+    "rgba(0, 0, 0, 0.68)";
+
+  ctx.fillRect(
+    boxX,
+    boxY,
+    boxWidth,
+    boxHeight
+  );
+
+  ctx.strokeStyle = "#FFD700";
+  ctx.lineWidth = 4;
+
+  ctx.strokeRect(
+    boxX,
+    boxY,
+    boxWidth,
+    boxHeight
+  );
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.fillStyle = "#FFD700";
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 5;
+
+  ctx.font =
+    "bold 28px monospace";
+
+  ctx.strokeText(
+    "🏆 ¡NUEVO RÉCORD!",
+    canvas.width / 2,
+    boxY + 32
+  );
+
+  ctx.fillText(
+    "🏆 ¡NUEVO RÉCORD!",
+    canvas.width / 2,
+    boxY + 32
+  );
+
+  ctx.font =
+    "bold 16px monospace";
+
+  ctx.fillStyle = "#FFFFFF";
+
+  const secondLine =
+    "SUPERASTE " +
+    recordAtGameStart.toLocaleString() +
+    " PUNTOS";
+
+  ctx.strokeText(
+    secondLine,
+    canvas.width / 2,
+    boxY + 68
+  );
+
+  ctx.fillText(
+    secondLine,
+    canvas.width / 2,
+    boxY + 68
+  );
+
+  ctx.restore();
+}
+
+
 function updateFrenzy() {
 
   // Frenesí no existe antes del nivel 10.
@@ -2607,6 +2832,30 @@ function drawFrenzy() {
 // ==========================================
 
 function checkCollision(obstacle) {
+
+  // Corona activa: los obstáculos no hacen daño.
+  // El obstáculo desaparece al tocar al jugador.
+  if (crownInvincible && !gameOver) {
+
+    const paddingX = 16;
+    const paddingY = 12;
+
+    const collision =
+      player.x + player.width - paddingX >
+        obstacle.x &&
+      player.x + paddingX <
+        obstacle.x + obstacle.width &&
+      player.y + player.height - paddingY >
+        obstacle.y &&
+      player.y + paddingY <
+        obstacle.y + obstacle.height;
+
+    if (collision) {
+      obstacle.destroyed = true;
+    }
+
+    return;
+  }
 
   // Durante el efecto de golpe no recibe otro daño
   if (playerHit && !gameOver) {
@@ -2989,6 +3238,14 @@ function restartGame() {
   gameStarted =
     true;
 
+  // Reiniciar estado de récord e invulnerabilidad.
+  recordAtGameStart = highScore;
+  newRecordAlertShown = false;
+  newRecordAlertTimer = 0;
+
+  crownInvincible = false;
+  crownInvincibleTimer = 0;
+
   bibleMessageTimer = 0;
   currentBibleMessageIndex = Math.floor(Math.random() * biblicalMessages.length);
   beginMatchTracking();
@@ -3350,6 +3607,10 @@ document.addEventListener(
       gameStarted =
         true;
 
+      recordAtGameStart = highScore;
+      newRecordAlertShown = false;
+      newRecordAlertTimer = 0;
+
       startMusic();
 
       return;
@@ -3460,6 +3721,10 @@ canvas.addEventListener(
 
       gameStarted =
         true;
+
+      recordAtGameStart = highScore;
+      newRecordAlertShown = false;
+      newRecordAlertTimer = 0;
 
       startMusic();
 
@@ -3594,6 +3859,8 @@ if (playerHit) {
 
     updateCombo();
     updateFrenzy();
+    updateCrownInvincibility();
+    updateNewRecordAlert();
     updateBibleMessage();
 
 
@@ -3625,6 +3892,8 @@ if (playerHit) {
     drawCombo();
     drawCollectibleCounter();
     drawFrenzy();
+    drawCrownInvincibility();
+    drawNewRecordAlert();
     drawBibleMessage();
 
     drawLevelMessage();
