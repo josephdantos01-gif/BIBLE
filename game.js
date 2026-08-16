@@ -585,9 +585,8 @@ function loadDailyRanking() {
 
 function drawDailyRanking() {
 
-  // Panel más ancho para que nombre y distrito
-  // no se monten entre sí.
-  const boxWidth = 440;
+  // Panel ancho: Nombre + Distrito + Puntos.
+  const boxWidth = 500;
   const boxHeight = 210;
 
   const boxX =
@@ -621,12 +620,10 @@ function drawDailyRanking() {
     boxHeight
   );
 
+  // TÍTULO
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-
-  ctx.font =
-    "bold 21px monospace";
-
+  ctx.font = "bold 21px monospace";
   ctx.fillStyle = "#FFD700";
   ctx.strokeStyle = "#000000";
   ctx.lineWidth = 4;
@@ -643,34 +640,35 @@ function drawDailyRanking() {
     boxY + 25
   );
 
-  // Encabezados
-  ctx.font =
-    "bold 14px monospace";
-
+  // ENCABEZADOS
+  ctx.font = "bold 14px monospace";
   ctx.fillStyle = "#7FE7FF";
 
   ctx.textAlign = "left";
-
   ctx.fillText(
     "NOMBRE",
-    boxX + 55,
+    boxX + 52,
+    boxY + 53
+  );
+
+  ctx.textAlign = "center";
+  ctx.fillText(
+    "DISTRITO",
+    boxX + 335,
     boxY + 53
   );
 
   ctx.textAlign = "right";
-
   ctx.fillText(
-    "DISTRITO",
-    boxX + boxWidth - 22,
+    "PUNTOS",
+    boxX + boxWidth - 18,
     boxY + 53
   );
 
   if (!rankingLoaded) {
 
     ctx.textAlign = "center";
-    ctx.font =
-      "bold 16px monospace";
-
+    ctx.font = "bold 16px monospace";
     ctx.fillStyle = "#FFFFFF";
 
     ctx.fillText(
@@ -689,9 +687,7 @@ function drawDailyRanking() {
   ) {
 
     ctx.textAlign = "center";
-    ctx.font =
-      "bold 15px monospace";
-
+    ctx.font = "bold 15px monospace";
     ctx.fillStyle = "#FFFFFF";
 
     ctx.fillText(
@@ -706,8 +702,7 @@ function drawDailyRanking() {
     return;
   }
 
-  ctx.font =
-    "bold 15px monospace";
+  ctx.font = "bold 15px monospace";
 
   dailyRanking.forEach(
     (entry, index) => {
@@ -727,18 +722,24 @@ function drawDailyRanking() {
         );
 
       const name =
-        rawName.length > 20
-          ? rawName.slice(0, 19) + "…"
+        rawName.length > 17
+          ? rawName.slice(0, 16) + "…"
           : rawName;
 
-      // Se muestra exactamente lo escrito
-      // en el campo Distrito, sin agregar "D".
+      // Se muestra exactamente el valor escrito
+      // por el jugador en Distrito.
       const district =
         String(
           entry.district ||
           "-"
         );
 
+      const points =
+        Number(
+          entry.score || 0
+        );
+
+      // POSICIÓN
       ctx.textAlign = "left";
 
       ctx.fillStyle =
@@ -752,18 +753,34 @@ function drawDailyRanking() {
         y
       );
 
+      // NOMBRE
       ctx.fillText(
         name,
-        boxX + 55,
+        boxX + 52,
         y
       );
 
-      ctx.textAlign = "right";
+      // DISTRITO
+      ctx.textAlign = "center";
       ctx.fillStyle = "#7FE7FF";
 
       ctx.fillText(
         district,
-        boxX + boxWidth - 22,
+        boxX + 335,
+        y
+      );
+
+      // PUNTOS
+      ctx.textAlign = "right";
+
+      ctx.fillStyle =
+        index === 0
+          ? "#FFD700"
+          : "#FFFFFF";
+
+      ctx.fillText(
+        points.toLocaleString(),
+        boxX + boxWidth - 18,
         y
       );
 
