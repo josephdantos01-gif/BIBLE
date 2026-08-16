@@ -1,11 +1,9 @@
 const canvas = document.getElementById("game");
 
-// Opciones pensadas para reducir latencia en navegadores móviles.
-// Si un navegador no soporta alguna opción, simplemente la ignora.
-const ctx = canvas.getContext("2d", {
-  alpha: false,
-  desynchronized: true
-});
+// Contexto 2D compatible con Chrome/Safari móvil.
+// Evitamos "desynchronized" y "alpha:false" porque en algunos
+// teléfonos pueden causar canvas negro o comportamiento inestable.
+const ctx = canvas.getContext("2d");
 
 ctx.imageSmoothingEnabled = false;
 
@@ -25,123 +23,6 @@ const isMobileDevice =
 // El resto del escenario conserva la misma apariencia.
 const MOBILE_TREE_SPACING = 560;
 const DESKTOP_TREE_SPACING = 420;
-
-// Cache de imágenes ya escaladas.
-// Evita que Chrome tenga que redimensionar PNG grandes
-// 60 veces por segundo.
-const renderCache = {
-  sky: null,
-  mountains: null,
-  forest: null,
-  tree: null,
-  ground: null
-};
-
-function createCachedLayer(
-  image,
-  width,
-  height
-) {
-
-  if (
-    !image ||
-    !image.complete ||
-    image.naturalWidth === 0 ||
-    width <= 0 ||
-    height <= 0
-  ) {
-    return null;
-  }
-
-  const buffer =
-    document.createElement("canvas");
-
-  buffer.width =
-    Math.ceil(width);
-
-  buffer.height =
-    Math.ceil(height);
-
-  const bufferCtx =
-    buffer.getContext("2d", {
-      alpha: true
-    });
-
-  bufferCtx.imageSmoothingEnabled =
-    false;
-
-  bufferCtx.drawImage(
-    image,
-    0,
-    0,
-    buffer.width,
-    buffer.height
-  );
-
-  return buffer;
-}
-
-function rebuildRenderCache() {
-
-  renderCache.sky =
-    createCachedLayer(
-      skyImage,
-      canvas.width,
-      canvas.height
-    );
-
-  renderCache.mountains =
-    createCachedLayer(
-      mountainsImage,
-      canvas.width,
-      groundY - 145
-    );
-
-  renderCache.forest =
-    createCachedLayer(
-      forestImage,
-      canvas.width,
-      groundY - 235
-    );
-
-  renderCache.tree =
-    createCachedLayer(
-      treeImage,
-      105,
-      170
-    );
-
-  renderCache.ground =
-    createCachedLayer(
-      groundImage,
-      333,
-      canvas.height -
-        groundDrawY +
-        40
-    );
-}
-
-function prepareCachedImage(
-  image
-) {
-
-  if (!image) return;
-
-  if (
-    image.complete &&
-    image.naturalWidth > 0
-  ) {
-    rebuildRenderCache();
-    return;
-  }
-
-  image.addEventListener(
-    "load",
-    rebuildRenderCache,
-    { once: true }
-  );
-}
-
 
 // ==========================================
 // CONFIGURACIÓN GENERAL
@@ -288,18 +169,6 @@ groundImage.fetchPriority = "high";
 groundImage.src =
   "assets/background/ground.png";
 
-// Construimos la caché en cuanto cada elemento visual está disponible.
-[
-  skyImage,
-  mountainsImage,
-  forestImage,
-  treeImage,
-  groundImage
-].forEach(
-  prepareCachedImage
-);
-
-
 // ==========================================
 // MOVIMIENTO DEL ESCENARIO
 // ==========================================
@@ -419,13 +288,6 @@ window.addEventListener("load", () => {
 
 // Respaldo por si el evento load ya ocurrió o algún navegador lo retrasa.
 setTimeout(loadSecondaryAssets, 1200);
-
-// Respaldo: reconstruimos la caché poco después de la carga.
-// Esto no bloquea el juego.
-setTimeout(
-  rebuildRenderCache,
-  700
-);
 
 // El ranking no bloquea el inicio del juego.
 // Se carga en paralelo unos instantes después.
@@ -1020,15 +882,7 @@ function drawBackground() {
   // CIELO
   // ==========================================
 
-  if (renderCache.sky) {
-
-    ctx.drawImage(
-      renderCache.sky,
-      0,
-      0
-    );
-
-  } else if (
+  if (
     skyImage.complete &&
     skyImage.naturalWidth > 0
   ) {
@@ -1085,28 +939,11 @@ function drawBackground() {
     mountainOffset <=
     -canvas.width
   ) {
-
     mountainOffset +=
       canvas.width;
-
   }
 
-  if (renderCache.mountains) {
-
-    ctx.drawImage(
-      renderCache.mountains,
-      mountainOffset,
-      145
-    );
-
-    ctx.drawImage(
-      renderCache.mountains,
-      mountainOffset +
-        canvas.width,
-      145
-    );
-
-  } else if (
+  if (
     mountainsImage.complete &&
     mountainsImage.naturalWidth > 0
   ) {
@@ -1121,8 +958,7 @@ function drawBackground() {
 
     ctx.drawImage(
       mountainsImage,
-      mountainOffset +
-        canvas.width,
+      mountainOffset + canvas.width,
       145,
       canvas.width,
       groundY - 145
@@ -1139,28 +975,11 @@ function drawBackground() {
     forestOffset <=
     -canvas.width
   ) {
-
     forestOffset +=
       canvas.width;
-
   }
 
-  if (renderCache.forest) {
-
-    ctx.drawImage(
-      renderCache.forest,
-      forestOffset,
-      235
-    );
-
-    ctx.drawImage(
-      renderCache.forest,
-      forestOffset +
-        canvas.width,
-      235
-    );
-
-  } else if (
+  if (
     forestImage.complete &&
     forestImage.naturalWidth > 0
   ) {
@@ -1175,8 +994,7 @@ function drawBackground() {
 
     ctx.drawImage(
       forestImage,
-      forestOffset +
-        canvas.width,
+      forestOffset + canvas.width,
       235,
       canvas.width,
       groundY - 235
@@ -1198,37 +1016,30 @@ function drawBackground() {
     treeOffset <=
     -treeSpacing
   ) {
-
     treeOffset +=
       treeSpacing;
-
   }
 
-  const treeWidth = 105;
-  const treeHeight = 170;
-
   if (
-    renderCache.tree ||
-    (
-      treeImage.complete &&
-      treeImage.naturalWidth > 0
-    )
+    treeImage.complete &&
+    treeImage.naturalWidth > 0
   ) {
+
+    const treeWidth = 105;
+    const treeHeight = 170;
 
     for (
       let x =
         treeOffset + 250;
 
       x <
-        canvas.width +
-        treeSpacing;
+        canvas.width + treeSpacing;
 
       x +=
         treeSpacing
     ) {
 
-      // No intentamos dibujar árboles completamente
-      // fuera de pantalla.
+      // En móvil no dibujamos árboles que ya no son visibles.
       if (
         x + treeWidth < 0 ||
         x > canvas.width
@@ -1236,27 +1047,13 @@ function drawBackground() {
         continue;
       }
 
-      if (renderCache.tree) {
-
-        ctx.drawImage(
-          renderCache.tree,
-          x,
-          groundY -
-            treeHeight
-        );
-
-      } else {
-
-        ctx.drawImage(
-          treeImage,
-          x,
-          groundY -
-            treeHeight,
-          treeWidth,
-          treeHeight
-        );
-
-      }
+      ctx.drawImage(
+        treeImage,
+        x,
+        groundY - treeHeight,
+        treeWidth,
+        treeHeight
+      );
 
     }
 
@@ -1271,6 +1068,13 @@ function drawBackground() {
 
 function drawGround() {
 
+  if (
+    !groundImage.complete ||
+    groundImage.naturalWidth === 0
+  ) {
+    return;
+  }
+
   const tileWidth = 330;
 
   const tileHeight =
@@ -1279,10 +1083,7 @@ function drawGround() {
     40;
 
 
-  // ==========================================
   // MOVIMIENTO DEL SUELO
-  // ==========================================
-
   if (
     gameStarted &&
     !gameOver &&
@@ -1306,60 +1107,35 @@ function drawGround() {
   }
 
 
-  // ==========================================
   // DIBUJAR BLOQUES
-  // ==========================================
+  for (
+    let x =
+      groundOffset -
+      tileWidth;
 
-  if (
-    renderCache.ground ||
-    (
-      groundImage.complete &&
-      groundImage.naturalWidth > 0
-    )
+    x <
+      canvas.width +
+      tileWidth;
+
+    x +=
+      tileWidth - 2
   ) {
 
-    for (
-      let x =
-        groundOffset -
-        tileWidth;
-
-      x <
-        canvas.width +
-        tileWidth;
-
-      x +=
-        tileWidth - 2
+    // No dibujar bloques totalmente fuera de pantalla.
+    if (
+      x + tileWidth < 0 ||
+      x > canvas.width
     ) {
-
-      // Omite bloques totalmente fuera de pantalla.
-      if (
-        x + tileWidth < 0 ||
-        x > canvas.width
-      ) {
-        continue;
-      }
-
-      if (renderCache.ground) {
-
-        ctx.drawImage(
-          renderCache.ground,
-          x,
-          groundDrawY
-        );
-
-      } else {
-
-        ctx.drawImage(
-          groundImage,
-          x,
-          groundDrawY,
-          tileWidth + 3,
-          tileHeight
-        );
-
-      }
-
+      continue;
     }
+
+    ctx.drawImage(
+      groundImage,
+      x,
+      groundDrawY,
+      tileWidth + 3,
+      tileHeight
+    );
 
   }
 
